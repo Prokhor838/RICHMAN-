@@ -1,2 +1,0 @@
-# RICHMAN-
-Games for chilling 
