@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0d">
+<title>RICHMAN</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#0b0b0d; --bg2:#141418; --card:#1a1a20; --card2:#22222a; --line:#2d2d38;
+  --gold:#f5c542; --gold2:#b8860b; --goldsoft:#ffe08a; --text:#f4f1ea; --mute:#9a9aa8;
+  --red:#d62839; --green:#1faa59; --radius:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+body{background:radial-gradient(900px 500px at 50% -150px,#2b2208 0%,var(--bg) 60%) no-repeat,var(--bg)}
+#app{max-width:520px;margin:0 auto;min-height:100%;padding:0 16px calc(96px + env(safe-area-inset-bottom));}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+button:active{transform:scale(.97)}
+.no-anim *{animation:none!important;transition:none!important}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:12px;padding:calc(14px + env(safe-area-inset-top)) 0 12px;position:sticky;top:0;z-index:5;
+  background:linear-gradient(var(--bg) 70%,transparent)}
+.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:var(--card2);
+  border:3px solid var(--frame,var(--gold));box-shadow:0 0 14px color-mix(in srgb,var(--frame,var(--gold)) 45%,transparent);flex:none}
+.avatar.big{width:84px;height:84px;font-size:46px}
+.who{flex:1;min-width:0}
+.who b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who small{color:var(--mute);font-size:13px}
+.bal{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 14px 7px 8px;font-weight:700;font-size:16px}
+.bal.pulse{animation:pulse .7s ease}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(245,197,66,.7)}100%{box-shadow:0 0 0 18px rgba(245,197,66,0)}}
+
+/* chip */
+.chip{width:26px;height:26px;border-radius:50%;flex:none;position:relative;
+  background:radial-gradient(circle at 35% 30%,#fff3b8,var(--gold) 45%,var(--gold2));
+  box-shadow:0 2px 6px rgba(0,0,0,.6),0 0 10px rgba(245,197,66,.35)}
+.chip::after{content:"";position:absolute;inset:4px;border-radius:50%;border:2px dashed rgba(60,40,0,.65)}
+.chip.lg{width:48px;height:48px}.chip.lg::after{inset:7px}
+
+h1{font-size:26px;margin:6px 0 4px}
+h2{font-size:19px;margin:22px 0 12px}
+.sub{color:var(--mute);font-size:15px;line-height:1.4}
+.card{background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.view{animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.hero{background:linear-gradient(135deg,#3a2c06,#17130a 60%,#1a1a20);border-color:#5a4410;position:relative;overflow:hidden}
+.hero .big{display:flex;align-items:center;gap:12px;font-size:36px;font-weight:800;color:var(--goldsoft);margin:6px 0 12px;text-shadow:0 0 18px rgba(245,197,66,.4)}
+.bar{height:10px;background:#0c0c10;border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));border-radius:99px;transition:width .5s}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--mute);margin-bottom:6px}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;border-radius:16px;font-weight:700;font-size:17px;
+  background:linear-gradient(180deg,var(--goldsoft),var(--gold) 50%,var(--gold2));color:#1b1300;box-shadow:0 6px 20px rgba(245,197,66,.25)}
+.btn.sec{background:var(--card2);color:var(--text);box-shadow:none;border:1px solid var(--line)}
+.btn.danger{background:#3a1015;color:#ff9aa2;border:1px solid #6b1c25;box-shadow:none}
+.btn[disabled]{opacity:.45;pointer-events:none;box-shadow:none}
+.btn.sm{min-height:42px;font-size:15px;width:auto;padding:0 16px}
+
+.hscroll{display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:0 16px 6px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.hscroll::-webkit-scrollbar{display:none}
+.game{flex:none;width:200px;scroll-snap-align:start;border-radius:var(--radius);padding:14px;background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);text-align:left;position:relative;overflow:hidden}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid .game{width:auto}
+.game .ic{font-size:38px;margin-bottom:8px;display:block}
+.game b{display:block;font-size:17px}
+.game small{color:var(--mute);font-size:13px;line-height:1.3;display:block;margin-top:4px}
+.badge{position:absolute;top:10px;right:10px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:#2a2a33;color:var(--mute)}
+.badge.go{background:var(--gold);color:#1b1300}
+.game.feature{width:auto;display:flex;gap:14px;align-items:center;border-color:#5a4410;background:linear-gradient(135deg,#2c2208,var(--card))}
+.wheel{width:78px;height:78px;border-radius:50%;flex:none;border:4px solid var(--gold);
+  background:radial-gradient(circle,#0b0b0d 0 22%,transparent 23%),
+  conic-gradient(var(--green) 0 9.7deg,var(--red) 0 19.4deg,#111 0 29.1deg,var(--red) 0 38.8deg,#111 0 48.5deg,var(--red) 0 58.2deg,#111 0 67.9deg,var(--red) 0 77.6deg,#111 0 87.3deg,var(--red) 0 97deg,#111 0 106.7deg,var(--red) 0 116.4deg,#111 0 126.1deg,var(--red) 0 135.8deg,#111 0 145.5deg,var(--red) 0 155.2deg,#111 0 164.9deg,var(--red) 0 174.6deg,#111 0 184.3deg,var(--red) 0 194deg,#111 0 203.7deg,var(--red) 0 213.4deg,#111 0 223.1deg,var(--red) 0 232.8deg,#111 0 242.5deg,var(--red) 0 252.2deg,#111 0 261.9deg,var(--red) 0 271.6deg,#111 0 281.3deg,var(--red) 0 291deg,#111 0 300.7deg,var(--red) 0 310.4deg,#111 0 320.1deg,var(--red) 0 329.8deg,#111 0 339.5deg,var(--red) 0 349.2deg,#111 0 360deg);
+  box-shadow:0 0 20px rgba(245,197,66,.3);animation:spin 18s linear infinite}
+.wheel.lg{width:180px;height:180px;margin:10px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card2);border-radius:14px;padding:12px}
+.stat b{display:block;font-size:20px;color:var(--goldsoft)}
+.stat span{font-size:13px;color:var(--mute)}
+
+.item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border:0}
+.item .tx{flex:1;min-width:0}
+.item .tx b{display:block;font-size:16px}
+.item .tx small{color:var(--mute);font-size:13px}
+.price{display:flex;align-items:center;gap:6px}
+.swatch{width:44px;height:44px;border-radius:50%;border:4px solid var(--c);background:var(--card2);flex:none;box-shadow:0 0 12px color-mix(in srgb,var(--c) 50%,transparent)}
+.ava{width:44px;height:44px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:24px;flex:none;border:1px solid var(--line)}
+
+.sw{width:58px;height:34px;border-radius:99px;background:#2a2a33;position:relative;transition:.2s;flex:none;border:1px solid var(--line)}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#888;transition:.2s}
+.sw.on{background:var(--gold2)}.sw.on::after{left:27px;background:var(--goldsoft)}
+
+nav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(14,14,17,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+nav .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+nav button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:11px;color:var(--mute);border-radius:12px}
+nav button span{font-size:22px;filter:grayscale(1) opacity(.7)}
+nav button.on{color:var(--gold)}nav button.on span{filter:none}
+
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:#2a2a33;color:var(--text);
+  border:1px solid var(--gold2);padding:12px 18px;border-radius:14px;font-size:15px;opacity:0;pointer-events:none;transition:.25s;z-index:30;max-width:88%;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}
+#modal.show{display:flex}
+#modal .box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;width:100%;max-width:380px}
+#modal h3{margin:0 0 10px}
+#modal input{width:100%;font:inherit;font-size:17px;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);color:var(--text);margin-bottom:14px;-webkit-user-select:text;user-select:text}
+#modal .acts{display:flex;gap:10px}
+.list li{margin-bottom:8px;color:var(--mute);line-height:1.4}
+.list{padding-left:20px;margin:0}
+
+/* ===== игры ===== */
+.bal small{color:var(--mute);font-size:12px;font-weight:600;margin-left:-2px}
+.resmsg{min-height:48px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;font-size:17px;margin:8px 0;color:var(--text);line-height:1.3}
+.resmsg.win{color:var(--goldsoft);text-shadow:0 0 14px rgba(245,197,66,.5)}
+.resmsg.lose{color:#ff8a94}
+.betbox.locked,.locked{opacity:.5;pointer-events:none}
+.betrow{display:flex;gap:8px;margin-bottom:8px}
+.betrow input,.autoin{flex:1;min-width:0;text-align:center;font:inherit;font-size:22px;font-weight:800;color:var(--goldsoft);background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px;-webkit-user-select:text;user-select:text}
+.autoin{font-size:18px;width:110px;flex:none}
+.presets{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.pbtn{min-height:46px;min-width:48px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-weight:700;font-size:15px}
+.pbtn.on{background:var(--gold);color:#1b1300;border-color:var(--gold)}
+.autorow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.autorow b{font-size:16px}
+
+.reels{display:flex;gap:10px;justify-content:center;padding:18px 10px;border-radius:var(--radius);background:linear-gradient(160deg,#2c2208,#121216);border:2px solid var(--gold2);box-shadow:inset 0 0 30px rgba(0,0,0,.6),0 0 24px rgba(245,197,66,.18);position:relative;margin:12px 0}
+.reels::after{content:"";position:absolute;left:8px;right:8px;top:50%;height:2px;background:rgba(245,197,66,.35);pointer-events:none}
+.reel{width:30%;max-width:100px;height:110px;border-radius:14px;background:linear-gradient(#0d0d10,#1c1c22 50%,#0d0d10);border:1px solid var(--line);display:grid;place-items:center;font-size:56px;overflow:hidden}
+.reel.spin span{filter:blur(2px);animation:jit .12s linear infinite}
+@keyframes jit{50%{transform:translateY(6px)}}
+.reel.stop{animation:bump .25s}
+@keyframes bump{50%{transform:scale(1.08)}}
+.reel.win{border-color:var(--gold);box-shadow:0 0 20px rgba(245,197,66,.7)}
+.pay{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:17px}
+.pay:last-child{border:0}.pay b{color:var(--goldsoft)}
+
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.hb{padding:5px 10px;border-radius:99px;background:var(--card2);font-weight:700;font-size:14px;border:1px solid var(--line)}
+.hb.win,.hb.g{color:#5be38f}.hb.lose,.hb.r{color:#ff8a94}.hb.push{color:var(--goldsoft)}
+.hb.red{background:var(--red);color:#fff}.hb.black{background:#000;color:#fff}.hb.green{background:var(--green);color:#fff}
+.hrow{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--mute)}
+.hrow:last-child{border:0}.hrow span:first-child{color:var(--text)}
+.pos{color:#5be38f}.neg{color:#ff8a94}
+
+.crashbox{position:relative;border-radius:var(--radius);overflow:hidden;background:#0e0e12;border:1px solid var(--line);margin:12px 0}
+.crashbox canvas{display:block;width:100%;height:auto}
+.cmult{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;font-size:54px;font-weight:900;color:var(--goldsoft);text-shadow:0 0 24px rgba(245,197,66,.5)}
+.cmult.crashed{color:#ff4d5e;text-shadow:0 0 24px rgba(255,77,94,.5)}
+.cmult.won{color:#5be38f;text-shadow:0 0 24px rgba(91,227,143,.4)}
+.cmult small{font-size:15px;font-weight:600;color:var(--mute);text-shadow:none;margin-top:2px}
+
+.wheelwrap{position:relative;width:min(300px,84vw);aspect-ratio:1;margin:10px auto}
+.wheelrot,.ballrot{position:absolute;inset:0;transition:transform 5s cubic-bezier(.12,.6,.1,1)}
+.wheelrot canvas{width:100%;height:100%;border-radius:50%;box-shadow:0 0 30px rgba(245,197,66,.3);display:block}
+.ballrot{pointer-events:none}
+.ball{position:absolute;top:6%;left:50%;width:13px;height:13px;margin-left:-6px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#bbb);box-shadow:0 0 6px #000}
+.hub{position:absolute;left:50%;top:50%;width:26%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(#1c1c22,#0b0b0d);border:3px solid var(--gold);display:grid;place-items:center;font-size:28px;font-weight:900;color:var(--goldsoft)}
+.hub.red{color:#ff5a68}.hub.black{color:#fff}.hub.green{color:#38d97f}
+.pointer{position:absolute;left:50%;top:-8px;margin-left:-11px;width:0;height:0;border:11px solid transparent;border-top:20px solid var(--gold);z-index:3;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}
+.rg{display:grid;gap:6px;margin-bottom:8px}
+.rg.n3{grid-template-columns:repeat(3,1fr)}
+.rcell{position:relative;min-height:46px;border-radius:10px;display:grid;place-items:center;align-content:center;font-weight:800;font-size:17px;border:1px solid rgba(255,255,255,.12);color:#fff;padding:0}
+.rcell.red{background:#a8202d}.rcell.black{background:#16161b}.rcell.green{background:#12753f}.rcell.out{background:var(--card2)}
+.rcell small{font-size:12px;font-weight:600;opacity:.75;line-height:1}
+.rcell .cb{position:absolute;top:-7px;right:-4px;min-width:24px;height:24px;padding:0 5px;border-radius:99px;background:radial-gradient(circle at 35% 30%,#fff3b8,var(--gold) 50%,var(--gold2));color:#1b1300;font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.6);z-index:2}
+.rcell.has .cb{display:flex}
+.rcell.hit{outline:3px solid var(--goldsoft);animation:pulse .9s ease 2}
+.rctl{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:6;background:rgba(20,20,24,.97);border:1px solid var(--gold2);border-radius:var(--radius);padding:10px 12px;margin-top:12px;box-shadow:0 -8px 24px rgba(0,0,0,.6)}
+.rctl .presets{grid-template-columns:repeat(5,1fr);margin-bottom:8px}
+.rctl .pbtn{min-height:42px}
+.rctl .acts{display:grid;grid-template-columns:48px 48px 48px 1fr;gap:8px}
+.rctl .acts .btn{min-height:46px;font-size:16px}
+
+/* уведомление о банкротстве */
+#bk{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+#bk.show{display:flex}
+#bk .box{width:100%;max-width:360px;text-align:center;padding:24px 20px 20px;border-radius:22px;border:1px solid var(--gold2);
+  background:linear-gradient(160deg,var(--card),var(--bg2));box-shadow:0 0 40px rgba(245,197,66,.25);animation:bkIn .3s ease}
+#bk .ico{font-size:54px;line-height:1;margin-bottom:6px}
+#bk h3{margin:6px 0 8px;font-size:23px;letter-spacing:.5px;color:var(--goldsoft)}
+#bk .sub{margin:0 0 10px}
+#bk .amt{display:flex;align-items:center;justify-content:center;gap:12px;font-size:34px;font-weight:900;color:var(--goldsoft);margin:12px 0;text-shadow:0 0 18px rgba(245,197,66,.4)}
+#bk .tmr{font-size:34px;font-weight:900;color:var(--goldsoft);font-variant-numeric:tabular-nums;margin:12px 0 16px}
+@keyframes bkIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+
+/* ===== служебное окно (скрыто, открывается только жестом) ===== */
+.bal{touch-action:manipulation}
+#adm{position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:flex-end;justify-content:center;z-index:45}
+#adm.show{display:flex}
+#adm .sheet{width:100%;max-width:520px;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid var(--gold2);border-bottom:0;border-radius:22px 22px 0 0;
+  box-shadow:0 0 40px rgba(245,197,66,.25);animation:bkIn .25s ease}
+#adm .adm-h{flex:none;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);font-size:18px;color:var(--goldsoft)}
+#adm .adm-x{width:42px;height:42px;border-radius:50%;background:var(--card2);border:1px solid var(--line);font-size:18px;display:grid;place-items:center}
+#adm .adm-tabs{display:flex;flex:none;gap:8px;padding:10px 16px 2px;overflow-x:auto;scrollbar-width:none}
+#adm .adm-tabs::-webkit-scrollbar{display:none}
+#adm .adm-tab{flex:none;min-height:40px;padding:0 16px;border-radius:99px;background:var(--card2);border:1px solid var(--line);font-weight:700;font-size:15px;color:var(--mute)}
+#adm .adm-tab.on{background:var(--gold);color:#1b1300;border-color:var(--gold)}
+#adm .adm-note{flex:none;display:none;margin:10px 16px 0;padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.35}
+#adm .adm-note.show{display:block}
+#adm .adm-note.ok{background:rgba(31,170,89,.15);border:1px solid var(--green);color:#7ff0ab}
+#adm .adm-note.err{background:#3a1015;border:1px solid #6b1c25;color:#ff9aa2}
+#adm .adm-body{padding:14px 16px calc(18px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#adm .adm-in{width:100%;min-width:0;font:inherit;font-size:16px;font-weight:700;text-align:center;color:var(--goldsoft);background:var(--bg2);
+  border:1px solid var(--line);border-radius:12px;padding:12px 8px;-webkit-user-select:text;user-select:text}
+#adm .adm-in:focus{outline:none;border-color:var(--gold)}
+#adm .adm-btns{display:grid;gap:10px;margin-top:12px}
+#adm .adm-btns .btn{font-size:16px}
+#adm .adm-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+#adm .adm-row:last-child{border:0}
+#adm .adm-row .tx{flex:1;min-width:0}
+#adm .adm-row .tx b{display:block;font-size:16px}
+#adm .adm-row .tx small{color:var(--mute);font-size:12px;line-height:1.3;display:block}
+#adm .adm-row .adm-in{width:104px;flex:none}
+#adm .adm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#adm .adm-cell{display:flex;align-items:center;gap:5px;padding:4px;border-radius:10px;border:1px solid var(--line);background:var(--card2)}
+#adm .adm-cell b{flex:none;width:26px;text-align:center;border-radius:6px;font-size:13px;padding:4px 0;color:#fff}
+#adm .adm-cell .c-red{background:#a8202d}#adm .adm-cell .c-black{background:#000;border:1px solid #333}#adm .adm-cell .c-green{background:#12753f}
+#adm .adm-cell .adm-in{padding:8px 2px;border-radius:8px}
+#adm .adm-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+#adm .adm-3 label{display:block;font-size:13px;color:var(--mute);text-align:center}
+#adm .adm-3 .adm-in{margin-top:4px}
+#adm .adm-stats{font-size:14px;line-height:1.6;color:var(--mute)}
+#adm .adm-stats b{color:var(--goldsoft)}
+#admCf{position:absolute;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px}
+#admCf.show{display:flex}
+#admCf .box{background:var(--card);border:1px solid var(--gold2);border-radius:20px;padding:20px;width:100%;max-width:380px}
+#admCf h3{margin:0 0 10px}
+#admCf .acts{display:flex;gap:10px;margin-top:14px}
+
+/* ===== покер / дурак / колесо удачи ===== */
+.pc{width:44px;height:62px;border-radius:8px;background:#f4f1ea;color:#111;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:17px;line-height:1.1;box-shadow:0 2px 6px rgba(0,0,0,.5);flex:none;border:1px solid #cfc7b4;animation:fade .25s ease}
+.pc small{font-size:15px}.pc.r{color:#c4202e}
+.pc.bk{background:repeating-linear-gradient(45deg,#3a2c06 0 6px,#17130a 6px 12px);border:2px solid var(--gold2)}
+.pc.e{background:transparent;border:1px dashed var(--line);box-shadow:none;animation:none}
+.pc.no{opacity:.4}.pc.dd{position:absolute;left:16px;top:16px;box-shadow:-2px 2px 8px rgba(0,0,0,.7)}
+.pcb{display:block;flex:none;padding:0;border-radius:8px}
+.pcb.sel .pc{outline:2px solid var(--gold);box-shadow:0 0 12px rgba(245,197,66,.6)}
+.pk-seats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seat{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:8px 4px;text-align:center;font-size:12px;color:var(--mute);display:flex;flex-direction:column;align-items:center;gap:2px;transition:.2s}
+.seat b{color:var(--text);font-size:13px}.seat small{font-size:11px;min-height:13px}
+.seat.act{border-color:var(--gold);box-shadow:0 0 14px rgba(245,197,66,.4)}.seat.fold{opacity:.4}
+.seat .pc{width:30px;height:42px;font-size:12px;border-radius:6px}.seat .pc small{font-size:11px}
+.seat .cards{margin:2px 0}.dkn{font-size:20px;font-weight:800;color:var(--goldsoft);margin:6px 0}
+.cards{display:flex;gap:6px;justify-content:center;margin:10px 0}
+.pk-pot{text-align:center;margin:12px 0 0;font-size:16px;color:var(--mute)}.pk-pot b{color:var(--goldsoft);font-size:20px}
+.pkacts{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px;margin-bottom:8px}
+.pkacts .btn{min-height:50px;font-size:15px;padding:0 6px}
+.dk-tab{min-height:92px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin:12px 0}
+.tp{position:relative;width:62px;height:80px}
+.hand{display:flex;gap:6px;overflow-x:auto;padding:14px 4px 6px;scrollbar-width:none}.hand::-webkit-scrollbar{display:none}
+.pl-wrap{width:100%;max-width:min(440px,calc(100dvh - 330px));min-width:260px;margin:8px auto}
+.pl-wrap canvas{display:block;width:100%;height:auto;border-radius:16px;box-shadow:0 0 24px rgba(90,150,255,.25);touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.pl-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}.pl-seg.locked{opacity:.55;pointer-events:none}
+#plInfo{font-size:13px;color:var(--goldsoft)}
+.mn-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:380px;margin:8px auto 0}
+.mn-stats div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 6px;text-align:center}
+.mn-stats small{display:block;color:var(--mute);font-size:12px}.mn-stats b{font-size:17px;color:var(--goldsoft)}
+.mn-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:380px;margin:10px auto;padding:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius)}
+.mn-c{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:14px;font-size:clamp(22px,8vw,34px);padding:0;background:linear-gradient(160deg,#2c2c38,#1c1c24);border:1px solid #3a3a48;box-shadow:inset 0 -3px 0 rgba(0,0,0,.35);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s}
+.mn-c.hid:not(:disabled):active{transform:scale(.92)}
+.mn-c.gem{background:radial-gradient(circle at 50% 40%,#1d6c92,#0f3550);border-color:#4cc3ff;box-shadow:0 0 14px rgba(76,195,255,.45)}
+.mn-c.mine{background:radial-gradient(circle,#7c1d29,#3a0d12);border-color:#ff5a68}
+.mn-c.pop{animation:mnpop .38s cubic-bezier(.2,1.6,.4,1)}
+.mn-c.boom{animation:mnboom .55s;box-shadow:0 0 22px rgba(255,70,90,.8)}
+.mn-c.rev{opacity:.55;animation:mnrev .35s both;animation-delay:var(--d,0s)}
+.mn-grid.shake{animation:mnshake .45s}
+@keyframes mnpop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+@keyframes mnboom{0%{transform:scale(1)}30%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes mnrev{from{opacity:0;transform:scale(.6)}to{opacity:.55;transform:scale(1)}}
+@keyframes mnshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.mn-fx{position:absolute;left:50%;top:50%;font-size:14px;pointer-events:none;animation:mnfx .7s ease-out forwards}
+@keyframes mnfx{from{transform:translate(-50%,-50%) scale(1);opacity:1}to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.5);opacity:0}}
+.mn-cnt{display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0 10px}.mn-cnt b{font-size:30px;min-width:48px;text-align:center;color:var(--goldsoft)}
+.mn-cnt .pbtn{min-width:64px;font-size:22px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav><div class="in" id="nav"></div></nav>
+<div id="toast"></div>
+<div id="modal"><div class="box" id="modalBox"></div></div>
+<div id="bk"><div class="box" id="bkBox"></div></div>
+<div id="adm"><div class="sheet" id="admSheet"></div><div id="admCf"></div></div>
+
+<script>
+"use strict";
+/* ==========================================================
+   RICHMAN v0.2 — структура файла (всё в одном index.html):
+   1. Config      — настройки и данные (задания, магазин, игры)
+   2. Storage     — сохранение (сейчас localStorage; позже сервер)
+   3. State/Economy — баланс, опыт, уровни (ВСЕ изменения фишек только тут)
+   4. Daily/Quests/Shop — игровые системы
+   5. Sound       — звук и музыка
+   6. UI          — экраны, навигация, события
+   Новая игра = новая запись в GAMES + свой экран в Screens.
+   Только виртуальные фишки. Реальных денег в игре нет.
+   ========================================================== */
+
+/* ---------- 1. Config ---------- */
+const CONFIG = {
+  saveKey: "richman.save.v1",
+  startBalance: 1000,   // RC для нового игрока
+  dailyCooldownMs: 24 * 60 * 60 * 1000,
+  dailyStreakResetMs: 48 * 60 * 60 * 1000,
+  dailyBase: 100, dailyStep: 50, dailyMaxStreak: 7,
+  maxBalance: 1e12,
+  rescueAmount: 1000,                     // RC, которые выдаются при банкротстве
+  rescueCooldownMs: 24 * 60 * 60 * 1000   // не чаще одного раза в 24 часа
+};
+const GAMES = [
+  {id:"roulette", name:"Европейская рулетка", icon:"🎡", desc:"Числа 0–36: цвет, чёт/нечет, диапазоны, числа", status:"live"},
+  {id:"slots",    name:"Слоты", icon:"🎰", desc:"3 барабана, выплаты до ×500", status:"live"},
+  {id:"crash",    name:"Crash", icon:"🚀", desc:"Забери выигрыш до обвала", status:"live"},
+  {id:"poker",    name:"Покер Hold'em", icon:"♠️", desc:"Против ботов", status:"live"},
+  {id:"fortune",  name:"Колесо удачи", icon:"🎯", desc:"Крути и получай призы", status:"live"},
+  {id:"durak",    name:"Дурак", icon:"🃏", desc:"Карточная игра с ботами", status:"live"},
+  {id:"plinko",   name:"Plinko", icon:"🔵", desc:"Шарик падает в ячейки с множителями до ×1000", status:"live"},
+  {id:"mines",    name:"Mines", icon:"💥", desc:"Открывай кристаллы, обходи мины", status:"live"}
+];
+const QUESTS = [
+  {id:"daily", t:"Забрать ежедневную награду", goal:1, chips:50, xp:30},
+  {id:"casino", t:"Заглянуть в казино", goal:1, chips:25, xp:15},
+  {id:"shop", t:"Посетить магазин", goal:1, chips:25, xp:15},
+  {id:"round", t:"Сыграть 3 раунда в любых играх", goal:3, chips:100, xp:50}
+];
+const SHOP = [
+  {id:"av_hat", type:"avatar", name:"Цилиндр", icon:"🎩", price:0},
+  {id:"av_lion", type:"avatar", name:"Лев", icon:"🦁", price:150},
+  {id:"av_wolf", type:"avatar", name:"Волк", icon:"🐺", price:250},
+  {id:"av_eagle", type:"avatar", name:"Орёл", icon:"🦅", price:400},
+  {id:"av_shades", type:"avatar", name:"Босс", icon:"🕶️", price:600},
+  {id:"av_dragon", type:"avatar", name:"Дракон", icon:"🐉", price:1000},
+  {id:"av_gem", type:"avatar", name:"Бриллиант", icon:"💎", price:1500},
+  {id:"av_crown", type:"avatar", name:"Корона", icon:"👑", price:2500},
+  {id:"fr_gold", type:"frame", name:"Золотая рамка", color:"#f5c542", price:0},
+  {id:"fr_emerald", type:"frame", name:"Изумруд", color:"#1faa59", price:200},
+  {id:"fr_ruby", type:"frame", name:"Рубин", color:"#e63946", price:350},
+  {id:"fr_sapphire", type:"frame", name:"Сапфир", color:"#3a86ff", price:500},
+  {id:"fr_violet", type:"frame", name:"Аметист", color:"#b266ff", price:800},
+  {id:"fr_white", type:"frame", name:"Платина", color:"#e8eef5", price:1200}
+];
+
+/* ---------- 2. Storage (заменяемый слой) ---------- */
+/* Сейчас данные лежат на устройстве (localStorage). Это НЕ защищённая серверная система:
+   пользователь может изменить такие данные. Для общих аккаунтов позже заменим этот объект
+   на запросы к серверу — остальной код менять не придётся. */
+const Storage = {
+  load(){ try{ const r = localStorage.getItem(CONFIG.saveKey); return r ? JSON.parse(r) : null; }catch(e){ return null; } },
+  save(data){ try{ localStorage.setItem(CONFIG.saveKey, JSON.stringify(data)); return true; }catch(e){ return false; } },
+  clear(){ try{ localStorage.removeItem(CONFIG.saveKey); }catch(e){} }
+};
+
+/* ---------- 3. State / Economy ---------- */
+const tg = (window.Telegram && window.Telegram.WebApp) || null;
+const todayKey = () => { const d = new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };
+
+function defaultState(){
+  let name = "Игрок";
+  try{ if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) name = String(tg.initDataUnsafe.user.first_name).slice(0,16); }catch(e){}
+  return {
+    v:1, name, balance:CONFIG.startBalance, level:1, xp:0, createdAt:Date.now(),
+    stats:{rounds:0, wins:0, biggestWin:0, wagered:0},
+    lastDaily:0, lastRescue:0, streak:0, lastBet:10, pending:null,
+    history:{slots:[],crash:[],roulette:[],poker:[],durak:[],fortune:[],plinko:[],mines:[]},
+    quests:{day:todayKey(), progress:{}, claimed:{}},
+    owned:["av_hat","fr_gold"], equipped:{avatar:"av_hat", frame:"fr_gold"},
+    settings:{sound:true, music:false, animations:true, haptics:true}
+  };
+}
+function isInt(n,min){ return Number.isSafeInteger(n) && n>=min; }
+function cleanInfo(i){
+  i = (i && typeof i==="object") ? i : {};
+  return {b:String(i.b||"").slice(0,24), c:String(i.c||"").replace(/[^a-z]/g,"").slice(0,8), d:String(i.d||"").slice(0,40),
+          n:isInt(i.n,0)&&i.n<=36?i.n:0, m:(typeof i.m==="number"&&isFinite(i.m)&&i.m>=0&&i.m<=1000)?i.m:0,
+          crash:(typeof i.crash==="number"&&isFinite(i.crash)&&i.crash>=1&&i.crash<=1000)?i.crash:1};
+}
+function cleanHistory(h){
+  const out = {};
+  ["slots","crash","roulette","poker","durak","fortune","plinko","mines"].forEach(g=>{
+    const a = (h && Array.isArray(h[g])) ? h[g] : [];
+    out[g] = a.slice(0,20).filter(e=>e && typeof e==="object").map(e=>({bet:isInt(e.bet,0)?e.bet:0, payout:isInt(e.payout,0)?e.payout:0,
+      b:String(e.b||"").slice(0,24), c:String(e.c||"").replace(/[^a-z]/g,"").slice(0,8), d:String(e.d||"").slice(0,40)}));
+  });
+  return out;
+}
+function cleanPending(p){
+  if(!p || typeof p!=="object" || !isInt(p.bet,1)) return null;
+  if(p.game==="billiard") return {game:"legacy", bet:p.bet, payout:p.bet, info:cleanInfo({b:"↩",c:"push",d:"Возврат ставки"})};   // раунд удалённой игры из старого сохранения: ставка возвращается
+  if(p.game==="mines"){
+    const c = p.count, ok = a => Array.isArray(a) && a.every(x=>Number.isInteger(x) && x>=0 && x<25) && new Set(a).size===a.length;
+    if(!isInt(c,1) || c>24 || !ok(p.mines) || p.mines.length!==c || !ok(p.opened) || p.opened.length>25-c || p.opened.some(x=>p.mines.includes(x))) return null;
+    return {game:"mines", bet:p.bet, count:c, mines:p.mines.slice(), opened:p.opened.slice()};
+  }
+  if(["slots","roulette","poker","durak","fortune","plinko","legacy"].includes(p.game)){
+    if(!isInt(p.payout,0)) return null;
+    return {game:p.game, bet:p.bet, payout:p.payout, info:cleanInfo(p.info)};
+  }
+  if(p.game==="crash"){
+    if(!(typeof p.crashPoint==="number" && p.crashPoint>=1 && p.crashPoint<=1000) || !isInt(p.startAt,0)) return null;
+    const a = (typeof p.auto==="number" && p.auto>=1.01 && p.auto<=1000) ? p.auto : 0;
+    return {game:"crash", bet:p.bet, crashPoint:p.crashPoint, startAt:Math.min(p.startAt,Date.now()), auto:a};
+  }
+  return null;
+}
+function sanitize(raw){
+  const d = defaultState();
+  if(!raw || typeof raw!=="object") return d;
+  const s = Object.assign({}, d, raw);
+  s.stats = Object.assign({}, d.stats, raw.stats||{});
+  s.settings = Object.assign({}, d.settings, raw.settings||{});
+  s.quests = Object.assign({}, d.quests, raw.quests||{});
+  s.quests.progress = s.quests.progress||{}; s.quests.claimed = s.quests.claimed||{};
+  s.equipped = Object.assign({}, d.equipped, raw.equipped||{});
+  s.owned = Array.isArray(raw.owned) ? raw.owned.filter(x=>typeof x==="string") : d.owned;
+  ["av_hat","fr_gold"].forEach(x=>{ if(!s.owned.includes(x)) s.owned.push(x); });
+  if(!s.owned.includes(s.equipped.avatar)) s.equipped.avatar="av_hat";
+  if(!s.owned.includes(s.equipped.frame)) s.equipped.frame="fr_gold";
+  if(!isInt(s.balance,0) || s.balance>CONFIG.maxBalance) s.balance = d.balance;
+  s.lastBet = isInt(s.lastBet,1) ? Math.min(s.lastBet,999999999) : 10;
+  s.history = cleanHistory(raw.history);
+  s.pending = cleanPending(raw.pending);
+  if(!isInt(s.level,1)) s.level=1;
+  if(!isInt(s.xp,0)) s.xp=0;
+  if(!isInt(s.streak,0)) s.streak=0;
+  if(!isInt(s.lastDaily,0) || s.lastDaily>Date.now()) s.lastDaily = s.lastDaily>Date.now()? Date.now() : 0;
+  if(!isInt(s.lastRescue,0)) s.lastRescue = 0;
+  if(s.lastRescue > Date.now()) s.lastRescue = Date.now();   // часы переведены назад — отсчёт заново
+  if(typeof s.name!=="string" || !s.name.trim()) s.name=d.name;
+  s.name = s.name.slice(0,16);
+  return s;
+}
+let S = sanitize(Storage.load());
+const save = () => Storage.save(S);
+
+const Economy = {
+  can(n){ return isInt(n,1) && S.balance >= n; },
+  /* списать фишки (покупка и т.п.). Возвращает true только если списание прошло */
+  spend(n){
+    if(!isInt(n,1) || S.balance < n) return false;
+    S.balance -= n; S.stats.wagered += n; save(); Bankruptcy.soon(); return true;
+  },
+  /* начислить фишки (награды) */
+  earn(n){
+    if(!isInt(n,1)) return false;
+    S.balance = Math.min(CONFIG.maxBalance, S.balance + n);
+    save(); ui.pulse = true; return true;
+  },
+  /* НАЧАТЬ раунд: ставка списывается ровно один раз. Пока раунд не завершён, начать другой нельзя. */
+  begin(game, bet, data){
+    if(S.pending) return false;
+    if(!isInt(bet,1) || bet > S.balance) return false;
+    S.balance -= bet; S.stats.wagered += bet;
+    S.pending = Object.assign({game, bet}, data||{});
+    save(); refreshTop(); return true;
+  },
+  /* ДОПЛАТИТЬ в уже идущем раунде (покер: повышение/уравнивание). Списывается один раз, ставка раунда растёт */
+  raise(n){
+    const p = S.pending; if(!p || !isInt(n,1) || n > S.balance) return false;
+    S.balance -= n; S.stats.wagered += n; p.bet += n; save(); refreshTop(); return true;
+  },
+  /* ЗАВЕРШИТЬ раунд: выплата начисляется ровно один раз (повторный вызов вернёт null) */
+  settle(payout, info){
+    const p = S.pending; if(!p) return null;
+    S.pending = null;
+    payout = isInt(payout,0) ? payout : 0;
+    if(payout > 0) S.balance = Math.min(CONFIG.maxBalance, S.balance + payout);
+    const h = S.history[p.game] = S.history[p.game] || [];
+    h.unshift(Object.assign({}, info||{}, {bet:p.bet, payout}));
+    if(h.length > 20) h.length = 20;
+    this.roundDone(payout > p.bet, payout);      // статистика, задания, опыт, save()
+    ui.pulse = payout > 0; refreshTop();
+    Bankruptcy.soon();      // проверка банкротства — уже после расчёта и с небольшой паузой
+    return {bet:p.bet, payout};
+  },
+  roundDone(won, payout){
+    S.stats.rounds++; if(won) S.stats.wins++;
+    if(won && payout>S.stats.biggestWin) S.stats.biggestWin = payout;
+    Quests.track("round"); this.addXp(10); save();
+  },
+  xpNeed(lvl){ return 100 + 50*(lvl-1); },
+  addXp(n){
+    if(!isInt(n,1)) return;
+    S.xp += n; let up = false;
+    while(S.xp >= this.xpNeed(S.level)){ S.xp -= this.xpNeed(S.level); S.level++; up = true; }
+    if(up){ toast("🎉 Новый уровень: "+S.level); Sound.win(); }
+    save();
+  }
+};
+/* обновить баланс на экране без перерисовки (нужно во время анимаций) */
+function refreshTop(){
+  document.querySelectorAll(".bal span").forEach(e=>e.textContent = fmt(S.balance));
+  document.querySelectorAll(".js-bal").forEach(e=>e.textContent = fmt(S.balance));
+  const lv = document.querySelector(".who small"); if(lv) lv.textContent = "Уровень "+S.level;
+  const b = document.querySelector(".bal");
+  if(b && ui.pulse){ b.classList.remove("pulse"); void b.offsetWidth; b.classList.add("pulse"); }
+  ui.pulse = false;
+}
+
+/* ---------- 4. Daily / Quests / Shop ---------- */
+const Daily = {
+  info(){
+    const now = Date.now(), next = S.lastDaily + CONFIG.dailyCooldownMs;
+    const avail = S.lastDaily===0 || now >= next;
+    let streak = S.streak;
+    if(avail){ streak = (S.lastDaily!==0 && now - S.lastDaily < CONFIG.dailyStreakResetMs) ? S.streak+1 : 1; }
+    const day = Math.min(streak, CONFIG.dailyMaxStreak);
+    return {avail, remain: Math.max(0, next-now), streak, reward: CONFIG.dailyBase + CONFIG.dailyStep*(day-1)};
+  },
+  claim(){
+    const i = this.info(); if(!i.avail) return false;   // защита от повторного получения
+    S.lastDaily = Date.now(); S.streak = i.streak;
+    Economy.earn(i.reward); Economy.addXp(20); Quests.track("daily"); save();
+    return i;
+  }
+};
+const Quests = {
+  ensure(){ if(S.quests.day !== todayKey()){ S.quests = {day:todayKey(), progress:{}, claimed:{}}; save(); } },
+  def(id){ return QUESTS.find(q=>q.id===id); },
+  track(id,n){ this.ensure(); const q=this.def(id); if(!q||S.quests.claimed[id]) return;
+    S.quests.progress[id] = Math.min(q.goal, (S.quests.progress[id]||0) + (n||1)); save(); },
+  claim(id){
+    this.ensure(); const q=this.def(id); if(!q) return false;
+    if(S.quests.claimed[id] || (S.quests.progress[id]||0) < q.goal) return false;
+    S.quests.claimed[id] = true; Economy.earn(q.chips); Economy.addXp(q.xp); save(); return q;
+  }
+};
+const Shop = {
+  item(id){ return SHOP.find(x=>x.id===id); },
+  buy(id){
+    const it = this.item(id); if(!it || S.owned.includes(id)) return "no";
+    if(!Economy.spend(it.price)) return "poor";
+    S.stats.wagered -= it.price;   // покупка — не ставка
+    S.owned.push(id); save(); return "ok";
+  },
+  equip(id){
+    const it = this.item(id); if(!it || !S.owned.includes(id)) return false;
+    S.equipped[it.type] = id; save(); return true;
+  }
+};
+
+/* ---------- 4б. Защита от банкротства ----------
+   ЕДИНСТВЕННОЕ место, где решается, выдавать ли RC при нулевом балансе.
+   Все игры и магазин используют его через Economy (settle / spend), поэтому
+   логика не дублируется. Вызывается: после рассчитанного раунда и покупки (soon),
+   при запуске и раз в секунду (start/tick), при попытке ставки с нулевым балансом.
+   Время восстановления лежит в S.lastRescue и сохраняется тем же save(), что и баланс. */
+const Bankruptcy = {
+  hold:0,          // до этого момента не проверяем: игрок должен увидеть итог раунда
+  noticed:false,   // уведомление «ждите» уже показано в текущем банкротстве
+  shown:null,      // что открыто в окне: "grant" | "wait" | null
+  left(){          // сколько мс осталось до следующего восстановления
+    return Math.max(0, Math.min(CONFIG.rescueCooldownMs, S.lastRescue + CONFIG.rescueCooldownMs - Date.now()));
+  },
+  soon(){ this.hold = Date.now() + 700; setTimeout(()=>this.check(), 750); },
+  check(force){
+    if(S.pending) return false;                       // раунд ещё не рассчитан — рано
+    if(S.balance < 0) S.balance = 0;                  // уйти в минус нельзя
+    if(S.balance > 0){ this.noticed = false; if(this.shown==="wait") this.close(); return false; }
+    if(!force && Date.now() < this.hold) return false;
+    const now = Date.now();
+    if(S.lastRescue > now) S.lastRescue = now;
+    this.syncStored();
+    if(S.lastRescue === 0 || now - S.lastRescue >= CONFIG.rescueCooldownMs) return this.grant(now);
+    if(force || !this.noticed){ this.noticed = true; this.show("wait"); Sound.error(); haptic("error"); }
+    return false;
+  },
+  /* другое окно приложения могло уже выдать восстановление — не дублируем */
+  syncStored(){
+    const st = Storage.load();
+    if(st && isInt(st.lastRescue,0) && st.lastRescue > S.lastRescue && st.lastRescue <= Date.now()) S.lastRescue = st.lastRescue;
+  },
+  grant(now){
+    S.lastRescue = now;                               // 1) фиксируем время
+    Economy.earn(CONFIG.rescueAmount);                // 2) начисляем; один save() пишет и баланс, и время
+    this.noticed = false;
+    if(ui.view !== "game") render(); else refreshTop();   // не трогаем экран игры
+    this.show("grant"); Sound.win(); haptic();
+    return true;
+  },
+  show(kind){
+    const bk = $("#bk"), box = $("#bkBox"); if(!bk || !box) return;
+    const amt = fmt(CONFIG.rescueAmount);
+    box.innerHTML = kind==="grant"
+      ? `<div class="ico">💸</div><h3>БАНКРОТСТВО!</h3>
+         <p class="sub">Вам начислено ${amt} RC для продолжения игры</p>
+         <div class="amt"><i class="chip lg"></i>+${amt}</div>
+         <p class="sub" style="font-size:13px">Автоматическое восстановление доступно один раз в 24 часа</p>
+         <button class="btn" data-action="bkClose">Продолжить игру</button>`
+      : `<div class="ico">⏳</div><h3>БАНКРОТСТВО</h3>
+         <p class="sub">Монеты закончились, а автоматическое восстановление уже использовано. Следующие ${amt} RC — через</p>
+         <div class="tmr" id="bkTmr">${fmtTime(this.left())}</div>
+         <button class="btn sec" data-action="bkClose">Понятно</button>`;
+    this.shown = kind; bk.classList.add("show");
+  },
+  close(){ const bk = $("#bk"); if(bk) bk.classList.remove("show"); this.shown = null; },
+  tick(){
+    if(this.shown==="wait"){ const t = $("#bkTmr"); if(t) t.textContent = fmtTime(this.left()); }
+    this.check();
+  },
+  start(){
+    const bk = $("#bk"); if(bk) bk.addEventListener("click", e=>{ if(e.target === bk) this.close(); });
+    this.check();
+    setInterval(()=>this.tick(), 1000);
+  }
+};
+
+/* ---------- 5. Sound ---------- */
+const Sound = {
+  ctx:null, music:null,
+  init(){ if(!this.ctx){ try{ const C = window.AudioContext||window.webkitAudioContext; if(C) this.ctx = new C(); }catch(e){} }
+    if(this.ctx && this.ctx.state==="suspended") this.ctx.resume().catch(()=>{}); return !!this.ctx; },
+  beep(f,d,type,vol){
+    if(!S.settings.sound || !this.init()) return;
+    try{ const c=this.ctx, o=c.createOscillator(), g=c.createGain(); o.type=type||"sine"; o.frequency.value=f;
+      g.gain.setValueAtTime(vol||0.06,c.currentTime); g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+d);
+      o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+d); }catch(e){}
+  },
+  click(){ this.beep(520,0.06,"triangle",0.05); },
+  win(){ this.beep(660,0.12); setTimeout(()=>this.beep(880,0.12),110); setTimeout(()=>this.beep(1175,0.2),220); },
+  error(){ this.beep(160,0.18,"sawtooth",0.05); },
+  startMusic(){
+    if(this.music || !S.settings.music || !this.init()) return;
+    try{ const c=this.ctx, g=c.createGain(); g.gain.value=0.025; g.connect(c.destination);
+      const oscs=[110,165,220.5].map(f=>{ const o=c.createOscillator(); o.type="sine"; o.frequency.value=f; o.connect(g); o.start(); return o; });
+      this.music={g,oscs}; }catch(e){}
+  },
+  stopMusic(){ if(!this.music) return; try{ this.music.oscs.forEach(o=>o.stop()); this.music.g.disconnect(); }catch(e){} this.music=null; },
+  syncMusic(){ S.settings.music ? this.startMusic() : this.stopMusic(); }
+};
+function haptic(kind){
+  if(!S.settings.haptics) return;
+  try{ if(tg && tg.HapticFeedback){ kind==="error" ? tg.HapticFeedback.notificationOccurred("error") : tg.HapticFeedback.impactOccurred("light"); }
+       else if(navigator.vibrate) navigator.vibrate(kind==="error"?60:15); }catch(e){}
+}
+
+/* ---------- 6. UI ---------- */
+const $ = s => document.querySelector(s);
+const fmt = n => Number(n).toLocaleString("ru-RU");
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ui = {view:"home", param:null, pulse:false};
+const Games = {active:null};
+const TABS = [["home","🏠","Главная"],["casino","🎮","Игры"],["profile","👤","Профиль"],["quests","📋","Задания"],["shop","🛒","Магазин"],["settings","⚙️","Настройки"]];
+
+let toastTimer=null;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200); }
+
+function modal({title, body, input, ok, cancel, onOk}){
+  const m=$("#modal"), b=$("#modalBox");
+  b.innerHTML = `<h3>${esc(title)}</h3>${body?`<p class="sub">${esc(body)}</p>`:""}
+    ${input!==undefined?`<input id="mInput" maxlength="16" value="${esc(input)}" autocomplete="off">`:""}
+    <div class="acts"><button class="btn sec" data-m="cancel">${esc(cancel||"Отмена")}</button><button class="btn" data-m="ok">${esc(ok||"ОК")}</button></div>`;
+  m.classList.add("show");
+  const close=()=>m.classList.remove("show");
+  b.querySelector('[data-m="cancel"]').onclick=close;
+  b.querySelector('[data-m="ok"]').onclick=()=>{ const v = input!==undefined ? $("#mInput").value : null; close(); onOk && onOk(v); };
+}
+
+function go(view,param){
+  ui.view=view; ui.param=param||null;
+  if(view==="casino") Quests.track("casino");
+  if(view==="shop") Quests.track("shop");
+  render(); window.scrollTo(0,0);
+}
+
+const frameColor = () => (Shop.item(S.equipped.frame)||{}).color || "#f5c542";
+const avatarIcon = () => (Shop.item(S.equipped.avatar)||{}).icon || "🎩";
+const avatarHtml = (cls) => `<div class="avatar ${cls||""}" style="--frame:${frameColor()}">${avatarIcon()}</div>`;
+
+function topbar(){
+  return `<div class="top">${avatarHtml()}
+    <div class="who"><b>${esc(S.name)}</b><small>Уровень ${S.level}</small></div>
+    <div class="bal ${ui.pulse?"pulse":""}"><i class="chip"></i><span>${fmt(S.balance)}</span><small>RC</small></div></div>`;
+}
+function xpBar(){
+  const need = Economy.xpNeed(S.level), p = Math.min(100, Math.round(S.xp/need*100));
+  return `<div class="row"><span>Опыт</span><span>${fmt(S.xp)} / ${fmt(need)}</span></div><div class="bar"><i style="width:${p}%"></i></div>`;
+}
+function gameCard(g){
+  const badge = g.status==="live" ? `<span class="badge go">Играть</span>` : `<span class="badge">Скоро</span>`;
+  return `<button class="game" data-action="game" data-arg="${g.id}">${badge}<span class="ic">${g.icon}</span><b>${g.name}</b><small>${g.desc}</small></button>`;
+}
+function fmtTime(ms){
+  const s=Math.ceil(ms/1000), h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60;
+  return [h,m,x].map(v=>String(v).padStart(2,"0")).join(":");
+}
+
+const Screens = {
+  home(){
+    const d = Daily.info(), rt = GAMES[0];
+    return `<h1>Добро пожаловать${S.name?", "+esc(S.name):""}!</h1>
+    <div class="sub">Только виртуальные фишки. Никаких реальных денег.</div>
+    <div class="card hero" style="margin-top:14px">
+      <div class="row"><span>Ваш баланс</span><span>Уровень ${S.level}</span></div>
+      <div class="big"><i class="chip lg"></i>${fmt(S.balance)}<small style="font-size:18px;color:var(--mute)">RC</small></div>
+      ${xpBar()}
+    </div>
+    <div class="card">
+      <div class="row"><b style="color:var(--text);font-size:17px">🎁 Ежедневная награда</b><span>Серия: ${d.avail?d.streak-1:S.streak}</span></div>
+      <div class="sub" style="margin-bottom:12px">${d.avail?`Сегодня: <b style="color:var(--goldsoft)">+${fmt(d.reward)}</b> RC`:`Следующая через <b id="dailyTimer" data-remain="${d.remain}" style="color:var(--goldsoft)">${fmtTime(d.remain)}</b>`}</div>
+      <button class="btn" data-action="daily" ${d.avail?"":"disabled"}>${d.avail?"Забрать награду":"Уже получена"}</button>
+    </div>
+    <h2>Популярные игры</h2>
+    <button class="game feature" style="width:100%" data-action="game" data-arg="roulette">
+      <div class="wheel"></div>
+      <div><span class="badge go" style="position:static;display:inline-block;margin-bottom:6px">Играть</span><b>${rt.name}</b><small>${rt.desc}</small></div>
+    </button>
+    <div class="hscroll" style="margin-top:12px">${GAMES.slice(1).map(gameCard).join("")}</div>`;
+  },
+  casino(){
+    return `<h1>Игры</h1><div class="sub" style="margin-bottom:14px">Выберите игру</div>
+    <div class="grid">${GAMES.map(gameCard).join("")}</div>`;
+  },
+  game(){
+    const g = GAMES.find(x=>x.id===ui.param) || GAMES[0];
+    const gv = GameViews[g.id];
+    const head = `<div class="gh"><button class="btn sec sm" data-action="nav" data-arg="casino">← Игры</button>
+      <h1 style="margin-top:14px">${g.icon} ${g.name}</h1></div>`;
+    if(gv) return head + gv.html();
+    return head + `<div style="text-align:center;font-size:90px;margin:14px 0">${g.icon}</div>
+    <div class="card"><b style="font-size:17px">Скоро</b>
+      <p class="sub">Эта игра ещё не создана.</p></div>
+    <button class="btn" data-action="nav" data-arg="casino">К списку игр</button>`;
+  },
+  profile(){
+    const st=S.stats, wr = st.rounds? Math.round(st.wins/st.rounds*100):0;
+    const days = Math.max(1, Math.floor((Date.now()-S.createdAt)/86400000)+1);
+    return `<div class="card" style="text-align:center">${avatarHtml("big")}
+      <h1 style="margin:12px 0 2px">${esc(S.name)}</h1><div class="sub">Уровень ${S.level}</div>
+      <div style="margin:14px 0">${xpBar()}</div>
+      <button class="btn sec sm" data-action="rename">✏️ Изменить имя</button></div>
+    <h2 style="margin-top:6px">Статистика</h2>
+    <div class="stats">
+      <div class="stat"><b>${fmt(S.balance)}</b><span>RC на балансе</span></div>
+      <div class="stat"><b>${fmt(st.rounds)}</b><span>Раундов сыграно</span></div>
+      <div class="stat"><b>${fmt(st.wins)}</b><span>Побед</span></div>
+      <div class="stat"><b>${wr}%</b><span>Доля побед</span></div>
+      <div class="stat"><b>${fmt(st.biggestWin)}</b><span>Крупнейший выигрыш</span></div>
+      <div class="stat"><b>${days}</b><span>Дней в игре</span></div>
+    </div>
+    <div class="row" style="margin-top:14px"><span>Серия ежедневных наград</span><span>${S.streak}</span></div>
+    <div class="sub">Предметов в коллекции: ${S.owned.length} из ${SHOP.length}</div>`;
+  },
+  quests(){
+    Quests.ensure();
+    return `<h1>Задания</h1><div class="sub" style="margin-bottom:14px">Обновляются каждый день</div>
+    <div class="card">${QUESTS.map(q=>{
+      const p = S.quests.progress[q.id]||0, done = p>=q.goal, cl = !!S.quests.claimed[q.id];
+      return `<div class="item"><div class="tx"><b>${q.t}</b>
+        <small>${p}/${q.goal} · +${fmt(q.chips)} RC, +${q.xp} опыта${q.note?" · "+q.note:""}</small></div>
+        <button class="btn sm" data-action="claimQuest" data-arg="${q.id}" ${done&&!cl?"":"disabled"}>${cl?"Получено":"Забрать"}</button></div>`;
+    }).join("")}</div>`;
+  },
+  shop(){
+    const row = it => {
+      const own = S.owned.includes(it.id), eq = S.equipped[it.type]===it.id;
+      const left = it.type==="avatar" ? `<div class="ava">${it.icon}</div>` : `<div class="swatch" style="--c:${it.color}"></div>`;
+      const btn = eq ? `<button class="btn sm sec" disabled>Надето</button>`
+        : own ? `<button class="btn sm sec" data-action="equip" data-arg="${it.id}">Надеть</button>`
+        : `<button class="btn sm" data-action="buy" data-arg="${it.id}"><i class="chip" style="width:18px;height:18px"></i>${fmt(it.price)}</button>`;
+      return `<div class="item">${left}<div class="tx"><b>${it.name}</b><small>${own?"В коллекции":"Покупка за RC"}</small></div>${btn}</div>`;
+    };
+    return `<h1>Магазин</h1><div class="sub" style="margin-bottom:14px">Покупки только за игровые RC</div>
+    <h2 style="margin-top:6px">Аватары</h2><div class="card">${SHOP.filter(i=>i.type==="avatar").map(row).join("")}</div>
+    <h2>Рамки</h2><div class="card">${SHOP.filter(i=>i.type==="frame").map(row).join("")}</div>`;
+  },
+  settings(){
+    const sw = (key,title,desc) => `<div class="item"><div class="tx"><b>${title}</b><small>${desc}</small></div>
+      <button class="sw ${S.settings[key]?"on":""}" data-action="toggle" data-arg="${key}" aria-label="${title}"></button></div>`;
+    return `<h1>Настройки</h1>
+    <div class="card" style="margin-top:14px">
+      ${sw("sound","Звук","Клики и эффекты")}${sw("music","Музыка","Тихий фон")}
+      ${sw("animations","Анимации","Отключите, если телефон тормозит")}${sw("haptics","Вибрация","Отклик при нажатиях")}
+    </div>
+    <div class="card"><b>О сохранении</b><p class="sub">Прогресс хранится только на этом устройстве и может пропасть при очистке данных. Общие аккаунты и серверное сохранение — в будущем.</p>
+      <button class="btn danger" data-action="reset">Сбросить прогресс</button></div>
+    <div class="sub" style="text-align:center">RICHMAN v0.2 · RC — игровая валюта без реальной ценности</div>`;
+  }
+};
+
+function render(){
+  Quests.ensure();
+  if(Games.active){ Games.active.unmount(); Games.active = null; }   // завершает раунд, если ушли посреди него
+  const v = Screens[ui.view] || Screens.home;
+  $("#app").innerHTML = topbar() + `<main class="view">${v()}</main>`;
+  ui.pulse = false;
+  if(ui.view==="game" && GameViews[ui.param]){ Games.active = GameViews[ui.param]; Games.active.mount(); }
+  const active = ui.view==="game" ? "casino" : ui.view;
+  $("#nav").innerHTML = TABS.map(t=>`<button class="${t[0]===active?"on":""}" data-action="nav" data-arg="${t[0]}"><span>${t[1]}</span>${t[2]}</button>`).join("");
+  document.body.classList.toggle("no-anim", !S.settings.animations);
+}
+
+const Actions = {
+  nav(a){ go(a); },
+  bkClose(){ Bankruptcy.close(); },
+  bet(a){ Bet.act(a); },
+  slotSpin(){ SlotsView.spin(); },
+  crashBtn(){ CrashView.press(); },
+  rbet(k){ RouletteView.place(k); },
+  rchip(v){ RouletteView.chip(v); },
+  rundo(){ RouletteView.undo(); },
+  rclear(){ RouletteView.clear(); },
+  rrepeat(){ RouletteView.repeat(); },
+  rspin(){ RouletteView.spin(); },
+  pkdeal(){ PokerView.deal(); }, pkact(a){ PokerView.act0(a); },
+  dkdeal(){ DurakView.start(); }, dkc(k){ DurakView.tapCard(parseInt(k,10)); }, dkt(k){ DurakView.tapTab(parseInt(k,10)); }, dkb(){ DurakView.btn(); },
+  fwspin(){ FortuneView.spin(); },
+  plrisk(a){ PlinkoView.setRisk(parseInt(a,10)); }, plrows(a){ PlinkoView.setRows(parseInt(a,10)); }, pldrop(){ PlinkoView.start(); },
+  mncount(a){ MinesView.setCount(a); }, mnstart(){ MinesView.start(); }, mncash(){ MinesView.cash(); }, mnc(a){ MinesView.tap(parseInt(a,10)); },
+  game(id){ go("game", id); },
+  daily(){
+    const r = Daily.claim();
+    if(!r){ Sound.error(); toast("Награда ещё недоступна"); return; }
+    Sound.win(); render(); toast("🎁 +"+fmt(r.reward)+" RC");
+  },
+  claimQuest(id){
+    const q = Quests.claim(id);
+    if(!q){ Sound.error(); return; }
+    Sound.win(); render(); toast("✅ +"+fmt(q.chips)+" RC");
+  },
+  buy(id){
+    const r = Shop.buy(id);
+    if(r==="poor"){ Sound.error(); haptic("error"); toast("Не хватает RC"); return; }
+    if(r==="ok"){ Shop.equip(id); Sound.win(); render(); toast("Куплено и надето!"); }
+  },
+  equip(id){ if(Shop.equip(id)){ render(); toast("Надето"); } },
+  toggle(key){
+    if(!(key in S.settings)) return;
+    S.settings[key] = !S.settings[key]; save();
+    if(key==="music") Sound.syncMusic();
+    render();
+  },
+  rename(){
+    modal({title:"Ваше имя", input:S.name, ok:"Сохранить", onOk:v=>{
+      const n = String(v||"").trim().slice(0,16);
+      if(!n){ toast("Имя не может быть пустым"); return; }
+      S.name = n; save(); render();
+    }});
+  },
+  reset(){
+    modal({title:"Сбросить прогресс?", body:"Баланс, уровень, покупки и статистика будут удалены. Это нельзя отменить.", ok:"Сбросить", onOk:()=>{
+      Storage.clear(); Sound.stopMusic(); S = defaultState(); save(); ui.view="home"; render(); toast("Прогресс сброшен");
+    }});
+  }
+};
+
+
+/* ==========================================================
+   7. ИГРЫ
+   Каждая игра — объект с html() / mount() / unmount() в GameViews.
+   Деньги трогает ТОЛЬКО Economy.begin (списать ставку один раз)
+   и Economy.settle (начислить выплату один раз).
+   Результат раунда определяется ДО анимации и хранится в S.pending,
+   поэтому его нельзя изменить задним числом, а если приложение закрыли
+   во время раунда — он честно завершится при следующем запуске.
+   ========================================================== */
+
+/* ---------- Случайность (криптографическая, равномерная) ---------- */
+const Rand = {
+  int(n){            // целое 0..n-1 без смещения
+    if(!(window.crypto && crypto.getRandomValues)) return Math.floor(Math.random()*n);
+    const a = new Uint32Array(1), lim = Math.floor(4294967296/n)*n;
+    do{ crypto.getRandomValues(a); }while(a[0] >= lim);
+    return a[0] % n;
+  },
+  float(){           // число [0,1)
+    if(!(window.crypto && crypto.getRandomValues)) return Math.random();
+    const a = new Uint32Array(2); crypto.getRandomValues(a);
+    return ((a[0]>>>5)*67108864 + (a[1]>>>6)) / 9007199254740992;
+  }
+};
+
+/* ==========================================================
+   ШАНСЫ — ЕДИНЫЙ ОБЪЕКТ КОНФИГУРАЦИИ ODDS
+   Все игры берут вероятности только отсюда:
+     slots.w     — вероятность каждого символа на барабане, % (сумма 100)
+     roulette.w  — вероятность каждого числа 0–36, % (сумма 100)
+     crash.rtp   — параметр формулы точки обвала (возврат игроку), %
+     crash.cap   — максимальная точка обвала (множитель)
+   ODDS_DEFAULT — исходные значения игры; их использует «Сбросить стандартные настройки».
+   Хранится отдельно от прогресса игрока (ключ ODDS_KEY), поэтому «Сбросить прогресс» шансы не трогает.
+   Выплаты, множители и правила игр здесь НЕ настраиваются.
+   ========================================================== */
+const ODDS_KEY = "richman.odds.v1";
+const ODDS_DEFAULT = {   // не изменять; для правок всегда делайте Odds.clone()
+  slots:{ w:{"🍒":30,"🍋":25,"🔔":18,"⭐":12,"💎":9,"7️⃣":6} },
+  roulette:{ w:Array.from({length:37}, ()=>100/37) },
+  crash:{ rtp:97, cap:1000 }
+};
+const Odds = {
+  clone(o){ return JSON.parse(JSON.stringify(o)); },
+  inRange(v,min,max){ return typeof v==="number" && isFinite(v) && v>=min && v<=max; },
+  /* список вероятностей → список с суммой ровно 100; null, если данные некорректны или сумма 0 */
+  normalize(arr){
+    if(!Array.isArray(arr) || !arr.every(v=>this.inRange(v,0,100))) return null;
+    const t = arr.reduce((a,b)=>a+b,0); if(!(t>0)) return null;
+    if(Math.abs(t-100) < 1e-9) return arr.slice();
+    return arr.map(v=>v*100/t);
+  },
+  sanitize(raw){
+    const o = this.clone(ODDS_DEFAULT);
+    if(!raw || typeof raw!=="object") return o;
+    const keys = Object.keys(o.slots.w), sw = raw.slots && raw.slots.w;
+    const n1 = (sw && typeof sw==="object") ? this.normalize(keys.map(k=>sw[k])) : null;
+    if(n1) keys.forEach((k,i)=>{ o.slots.w[k] = n1[i]; });
+    const rw = raw.roulette && raw.roulette.w;
+    const n2 = (Array.isArray(rw) && rw.length===37) ? this.normalize(rw) : null;
+    if(n2) o.roulette.w = n2;
+    const c = raw.crash;
+    if(c && this.inRange(c.rtp,1,100)) o.crash.rtp = c.rtp;
+    if(c && this.inRange(c.cap,1.01,1000)) o.crash.cap = c.cap;
+    return o;
+  },
+  load(){ try{ const r = localStorage.getItem(ODDS_KEY); return this.sanitize(r ? JSON.parse(r) : null); }catch(e){ return this.clone(ODDS_DEFAULT); } },
+  save(){ try{ localStorage.setItem(ODDS_KEY, JSON.stringify(ODDS)); return true; }catch(e){ return false; } }
+};
+let ODDS = Odds.load();
+
+/* ---------- Общие куски интерфейса ---------- */
+const Bet = {
+  html(){
+    return `<div class="card betbox" id="betBox">
+      <div class="row"><span>Ставка, RC</span><span>Баланс: <b class="js-bal" style="color:var(--goldsoft)">${fmt(S.balance)}</b></span></div>
+      <div class="betrow">
+        <button class="pbtn" data-action="bet" data-arg="half">½</button>
+        <input id="betInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="9" value="${S.lastBet}" autocomplete="off">
+        <button class="pbtn" data-action="bet" data-arg="x2">×2</button>
+      </div>
+      <div class="presets">${[10,50,100,500].map(v=>`<button class="pbtn" data-action="bet" data-arg="${v}">${v}</button>`).join("")}<button class="pbtn" data-action="bet" data-arg="max">MAX</button></div>
+    </div>`;
+  },
+  get(){ const el = $("#betInput"); const v = parseInt(el ? el.value : S.lastBet, 10); return isInt(v,1) ? v : 0; },
+  validate(){            // возвращает ставку или 0 (с сообщением об ошибке)
+    if(S.balance <= 0){ Bankruptcy.check(true); return 0; }
+    const v = this.get();
+    if(!v){ toast("Введите ставку"); Sound.error(); haptic("error"); return 0; }
+    if(v > S.balance){ toast("Не хватает RC"); Sound.error(); haptic("error"); return 0; }
+    return v;
+  },
+  set(v){ const el = $("#betInput"); if(el) el.value = v; S.lastBet = v; save(); },
+  act(arg){
+    if(S.pending) return;
+    const cur = this.get() || S.lastBet; let v;
+    if(arg==="half") v = Math.floor(cur/2);
+    else if(arg==="x2") v = Math.min(cur*2, Math.max(1,S.balance));
+    else if(arg==="max") v = S.balance;
+    else v = parseInt(arg,10);
+    this.set(Math.max(1, Math.min(v||1, 999999999)));
+  },
+  lock(on){ const b = $("#betBox"); if(b) b.classList.toggle("locked", on); const i = $("#betInput"); if(i) i.disabled = on; }
+};
+
+function histHtml(game){
+  const h = S.history[game] || [];
+  if(!h.length) return `<div class="sub">Пока нет сыгранных раундов</div>`;
+  const badges = h.slice(0,14).map(e=>`<span class="hb ${esc(e.c)}">${esc(e.b)}</span>`).join("");
+  const rows = h.slice(0,6).map(e=>{
+    const net = e.payout - e.bet;
+    return `<div class="hrow"><span>${esc(e.d || e.b)}</span><span>ставка ${fmt(e.bet)}</span><b class="${net>0?"pos":net<0?"neg":""}">${net>0?"+":""}${fmt(net)}</b></div>`;
+  }).join("");
+  return `<div class="badges">${badges}</div><div class="card" style="padding:4px 16px">${rows}</div>`;
+}
+function gameMsg(id, text, cls){ const m = $(id); if(m){ m.textContent = text; m.className = "resmsg " + (cls||""); } }
+function fmtShort(n){ return n>=1e6 ? (n/1e6).toFixed(1).replace(".0","")+"M" : n>=1e3 ? (n/1e3).toFixed(1).replace(".0","")+"k" : String(n); }
+
+/* ==========================================================
+   СЛОТЫ — 3 барабана, одна линия
+   Выплата = ставка × множитель комбинации.
+   Три одинаковых символа — по таблице; ровно две 🍒 — возврат ставки (×1).
+   ========================================================== */
+const SLOT = {
+  syms:[ {s:"🍒",w:30,p:5}, {s:"🍋",w:25,p:10}, {s:"🔔",w:18,p:25}, {s:"⭐",w:12,p:60}, {s:"💎",w:9,p:150}, {s:"7️⃣",w:6,p:500} ],
+  /* x.w — исходные (стандартные) веса; реальные вероятности берутся из ODDS.slots.w */
+  pick(){
+    const W = ODDS.slots.w; let t = 0; this.syms.forEach(x=>{ t += W[x.s]; });
+    let r = Rand.float()*t, last = this.syms[0].s;
+    for(const x of this.syms){ const w = W[x.s]; if(w > 0){ last = x.s; if(r < w) return x.s; r -= w; } }
+    return last;
+  },
+  eval(res){
+    if(res[0]===res[1] && res[1]===res[2]) return this.syms.find(x=>x.s===res[0]).p;
+    if(res.filter(s=>s==="🍒").length === 2) return 1;
+    return 0;
+  }
+};
+const SlotsView = {
+  V:{busy:false, timers:[]},
+  html(){
+    return `<div class="reels" id="reels">${["🍒","🔔","💎"].map((s,i)=>`<div class="reel" id="reel${i}"><span>${s}</span></div>`).join("")}</div>
+    <div class="resmsg" id="slotMsg">Сделайте ставку и крутите!</div>
+    ${Bet.html()}
+    <button class="btn" id="spinBtn" data-action="slotSpin">🎰 Крутить</button>
+    <h2>Таблица выплат</h2>
+    <div class="card" style="padding:4px 16px">
+      ${SLOT.syms.slice().reverse().map(x=>`<div class="pay"><span>${x.s} ${x.s} ${x.s}</span><b>×${x.p}</b></div>`).join("")}
+      <div class="pay"><span>🍒 🍒 (любые две)</span><b>×1 · возврат</b></div>
+    </div>
+    <h2>Последние результаты</h2><div id="hist">${histHtml("slots")}</div>`;
+  },
+  mount(){ this.V.busy = false; this.V.timers = []; },
+  unmount(){
+    const V = this.V; V.timers.forEach(t=>{ clearInterval(t); clearTimeout(t); }); V.timers = []; V.busy = false;
+    const p = S.pending; if(p && p.game==="slots") Economy.settle(p.payout, p.info);   // не теряем раунд при выходе
+  },
+  spin(){
+    const V = this.V; if(V.busy || S.pending) return;
+    const bet = Bet.validate(); if(!bet) return;
+    const res = [SLOT.pick(), SLOT.pick(), SLOT.pick()];     // результат определён заранее
+    const mult = SLOT.eval(res), payout = bet * mult;
+    const cls = payout > bet ? "win" : payout > 0 ? "push" : "lose";
+    if(!Economy.begin("slots", bet, {payout, info:{b:res.join(" "), c:cls, m:mult}})){ Sound.error(); return; }
+    V.busy = true; Bet.lock(true); $("#spinBtn").disabled = true;
+    gameMsg("#slotMsg","Крутим…");
+    const k = S.settings.animations ? 1 : 0.05;
+    res.forEach((sym,i)=>{
+      const el = $("#reel"+i), span = el.firstChild; el.classList.remove("win","stop"); el.classList.add("spin");
+      const iv = setInterval(()=>{ span.textContent = SLOT.syms[Math.floor(Math.random()*SLOT.syms.length)].s; Sound.beep(300+Math.random()*100,0.03,"square",0.015); }, 80);
+      V.timers.push(iv);
+      V.timers.push(setTimeout(()=>{
+        clearInterval(iv); el.classList.remove("spin"); span.textContent = sym; el.classList.add("stop");
+        Sound.beep(420+i*120,0.09,"triangle",0.06);
+      }, (900 + i*450)*k));
+    });
+    V.timers.push(setTimeout(()=>this.finish(), (900 + 2*450 + 350)*k));
+  },
+  finish(){
+    const V = this.V; V.timers.forEach(t=>{ clearInterval(t); clearTimeout(t); }); V.timers = [];
+    const p = S.pending; V.busy = false;
+    if(!p || p.game!=="slots") return;
+    const r = Economy.settle(p.payout, p.info);
+    Bet.lock(false); const sb = $("#spinBtn"); if(sb) sb.disabled = false;
+    if(!r) return;
+    const m = p.info.m;
+    if(r.payout > r.bet){
+      [0,1,2].forEach(i=>$("#reel"+i).classList.add("win"));
+      gameMsg("#slotMsg", `🎉 Комбинация ×${m}: +${fmt(r.payout)} RC`, "win"); Sound.win(); haptic();
+    }else if(r.payout > 0){
+      gameMsg("#slotMsg", "Две вишни — ставка возвращена", "win");
+    }else{
+      gameMsg("#slotMsg", `Не повезло: −${fmt(r.bet)} RC`, "lose");
+    }
+    $("#hist").innerHTML = histHtml("slots");
+  }
+};
+
+/* ==========================================================
+   CRASH
+   Множитель m(t) = e^(0.1·t). Точка обвала выбирается при старте раунда
+   (RTP ≈ 97%) и сохраняется в S.pending — игрок не может на неё повлиять.
+   ========================================================== */
+const Crash = {
+  rate:0.1,
+  mult(t){ return Math.exp(this.rate*t); },
+  timeAt(m){ return Math.log(m)/this.rate; },
+  newPoint(){ const r = Rand.float(); return Math.min(ODDS.crash.cap, Math.max(1, Math.floor(ODDS.crash.rtp/(1-r))/100)); },   // стандарт: rtp 97, cap 1000
+  payout(bet,m){ return Math.floor(bet*Math.round(m*100)/100); },
+  state(){
+    const p = S.pending; if(!p || p.game!=="crash") return null;
+    const t = Math.max(0, (Date.now()-p.startAt)/1000), tc = this.timeAt(p.crashPoint);
+    if(p.auto && p.auto <= p.crashPoint && t >= this.timeAt(p.auto)) return {phase:"auto", mult:p.auto, t};
+    if(t >= tc) return {phase:"crashed", mult:p.crashPoint, t:tc};
+    return {phase:"running", mult:Math.floor(this.mult(t)*100)/100, t};
+  },
+  info(p, got){
+    const c = p.crashPoint;
+    return {b:"×"+c.toFixed(2), c:c>=2?"g":"r", d:got?("забрал ×"+got.toFixed(2)):("обвал ×"+c.toFixed(2)), m:got||0, crash:c};
+  },
+  _settle(payout, info){ const r = Economy.settle(payout, info); if(r) CrashView.onSettled(r, info); return r; },
+  finishIfDone(){            // авто-вывод или обвал; безопасно вызывать много раз
+    const st = this.state(); if(!st || st.phase==="running") return null;
+    const p = S.pending;
+    if(st.phase==="auto") return this._settle(this.payout(p.bet, st.mult), this.info(p, st.mult));
+    return this._settle(0, this.info(p, 0));
+  },
+  cashOut(){
+    const st = this.state(); if(!st) return null;
+    if(st.phase!=="running") return this.finishIfDone();       // опоздали — раунд уже завершён
+    const p = S.pending;
+    return this._settle(this.payout(p.bet, st.mult), this.info(p, st.mult));
+  }
+};
+const CrashView = {
+  V:{raf:0, active:false, cv:null, ctx:null},
+  html(){
+    return `<div class="crashbox"><canvas id="crashCv" width="640" height="340"></canvas>
+      <div class="cmult" id="cMult"><span id="cMultT">×1.00</span><small id="cSub">Сделайте ставку и нажмите «Старт»</small></div></div>
+    <div class="resmsg" id="cMsg"></div>
+    ${Bet.html()}
+    <div class="card"><div class="autorow"><b>Авто-вывод на ×</b>
+      <input class="autoin" id="crashAuto" type="text" inputmode="decimal" maxlength="7" placeholder="выкл" autocomplete="off"></div>
+      <div class="sub" style="margin-top:6px">Необязательно: от 1.01 до 1000. Пусто — выводите вручную.</div></div>
+    <button class="btn" id="cBtn" data-action="crashBtn">🚀 Старт</button>
+    <h2>Последние раунды</h2><div id="hist">${histHtml("crash")}</div>`;
+  },
+  mount(){
+    const V = this.V; V.active = true; V.cv = $("#crashCv"); V.ctx = V.cv.getContext("2d");
+    this.draw(0,1,false);
+    if(S.pending && S.pending.game==="crash"){ this.lock(true); this.loop(); }
+  },
+  unmount(){ const V = this.V; V.active = false; cancelAnimationFrame(V.raf); }, // раунд продолжается «в фоне» по времени
+  lock(on){ Bet.lock(on); const a = $("#crashAuto"); if(a) a.disabled = on; },
+  press(){ (S.pending && S.pending.game==="crash") ? Crash.cashOut() : this.start(); },
+  start(){
+    if(S.pending) return;
+    const bet = Bet.validate(); if(!bet) return;
+    let auto = 0; const raw = ($("#crashAuto").value||"").trim().replace(",",".");
+    if(raw){
+      const a = Number(raw);
+      if(!isFinite(a) || a < 1.01 || a > 1000){ toast("Авто-вывод: от 1.01 до 1000"); Sound.error(); return; }
+      auto = Math.round(a*100)/100;
+    }
+    const crashPoint = Crash.newPoint();           // определено до старта
+    if(!Economy.begin("crash", bet, {crashPoint, startAt:Date.now(), auto})){ Sound.error(); return; }
+    gameMsg("#cMsg","");
+    this.lock(true); this.loop();
+  },
+  loop(){
+    const V = this.V; cancelAnimationFrame(V.raf); if(!V.active) return;
+    const p = S.pending; if(!p || p.game!=="crash") return;
+    const st = Crash.state();
+    if(st.phase !== "running"){ Crash.finishIfDone(); return; }   // onSettled нарисует итог
+    $("#cMult").className = "cmult";
+    $("#cMultT").textContent = "×" + st.mult.toFixed(2);
+    const pay = Crash.payout(p.bet, st.mult);
+    $("#cSub").textContent = "Выплата сейчас: " + fmt(pay) + " RC" + (p.auto ? " · авто ×"+p.auto.toFixed(2) : "");
+    const b = $("#cBtn"); b.textContent = "💰 Забрать " + fmt(pay) + " RC"; b.className = "btn";
+    this.draw(st.t, st.mult, false);
+    V.raf = requestAnimationFrame(()=>this.loop());
+  },
+  onSettled(res, info){
+    const V = this.V; if(!V.active) return;
+    cancelAnimationFrame(V.raf);
+    const won = res.payout > 0;
+    if(won){
+      $("#cMult").className = "cmult won"; $("#cMultT").textContent = "×" + info.m.toFixed(2);
+      $("#cSub").textContent = "Обвал был бы на ×" + info.crash.toFixed(2);
+      gameMsg("#cMsg", `🎉 Забрали ×${info.m.toFixed(2)}: +${fmt(res.payout)} RC`, "win"); Sound.win(); haptic();
+      this.draw(Crash.timeAt(info.m), info.m, false);
+    }else{
+      $("#cMult").className = "cmult crashed"; $("#cMultT").textContent = "×" + info.crash.toFixed(2);
+      $("#cSub").textContent = "ОБВАЛ!";
+      gameMsg("#cMsg", `💥 Обвал на ×${info.crash.toFixed(2)}: −${fmt(res.bet)} RC`, "lose"); Sound.error(); haptic("error");
+      this.draw(Crash.timeAt(info.crash), info.crash, true);
+    }
+    this.lock(false);
+    const b = $("#cBtn"); if(b){ b.textContent = "🚀 Старт"; b.className = "btn"; }
+    const h = $("#hist"); if(h) h.innerHTML = histHtml("crash");
+  },
+  draw(t, m, crashed){
+    const V = this.V, c = V.ctx; if(!c) return;
+    const W = V.cv.width, H = V.cv.height, pad = 28;
+    c.clearRect(0,0,W,H); c.fillStyle = "#0e0e12"; c.fillRect(0,0,W,H);
+    c.strokeStyle = "rgba(255,255,255,.06)"; c.lineWidth = 1;
+    for(let i=1;i<5;i++){ const y = pad + (H-2*pad)*i/5; c.beginPath(); c.moveTo(pad,y); c.lineTo(W-pad,y); c.stroke(); }
+    if(t <= 0) return;
+    const tmax = Math.max(8, t*1.12), ymax = Math.max(2, m*1.2), N = 70, pts = [];
+    for(let i=0;i<=N;i++){
+      const tt = t*i/N, mm = Crash.mult(tt);
+      pts.push([pad + tt/tmax*(W-2*pad), H - pad - (mm-1)/(ymax-1)*(H-2*pad)]);
+    }
+    const col = crashed ? "#ff4d5e" : "#f5c542";
+    c.beginPath(); pts.forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));
+    c.lineTo(pts[N][0],H-pad); c.lineTo(pts[0][0],H-pad); c.closePath();
+    c.fillStyle = crashed ? "rgba(255,77,94,.12)" : "rgba(245,197,66,.12)"; c.fill();
+    c.beginPath(); pts.forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));
+    c.strokeStyle = col; c.lineWidth = 5; c.lineJoin = "round"; c.shadowColor = col; c.shadowBlur = 14; c.stroke(); c.shadowBlur = 0;
+    const e = pts[N]; c.beginPath(); c.arc(e[0],e[1],9,0,7); c.fillStyle = col; c.fill();
+  }
+};
+
+/* ==========================================================
+   ЕВРОПЕЙСКАЯ РУЛЕТКА (0–36, одно зеро)
+   Выплаты: число 35:1, дюжина/колонка 2:1, цвет/чёт-нечет/1–18/19–36 1:1.
+   Зеро проигрышное для всех внешних ставок.
+   ========================================================== */
+const ROU = {
+  order:[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26],
+  reds:[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36],
+  names:{red:"красное",black:"чёрное",even:"чёт",odd:"нечёт",low:"1–18",high:"19–36",d1:"1–12",d2:"13–24",d3:"25–36",c1:"колонка 1",c2:"колонка 2",c3:"колонка 3"},
+  color(n){ return n===0 ? "green" : (this.reds.includes(n) ? "red" : "black"); },
+  /* выпавшее число с учётом ODDS.roulette.w; при стандартных (равных) шансах — как в исходной игре */
+  pick(){
+    const w = ODDS.roulette.w;
+    if(w.every(v=>v===w[0])) return Rand.int(37);
+    const t = w.reduce((a,b)=>a+b,0); let r = Rand.float()*t, last = 0;
+    for(let i=0;i<37;i++){ if(w[i] > 0){ last = i; if(r < w[i]) return i; r -= w[i]; } }
+    return last;
+  },
+  valid(key){ return /^n:(\d|[12]\d|3[0-6])$/.test(key) || Object.prototype.hasOwnProperty.call(this.names, key); },
+  /* сколько RC возвращается за 1 RC ставки (вместе со ставкой); 0 — проигрыш */
+  ret(key, n){
+    if(key.startsWith("n:")) return parseInt(key.slice(2),10) === n ? 36 : 0;
+    if(n === 0) return 0;
+    switch(key){
+      case "red": return this.color(n)==="red" ? 2 : 0;
+      case "black": return this.color(n)==="black" ? 2 : 0;
+      case "even": return n%2===0 ? 2 : 0;
+      case "odd": return n%2===1 ? 2 : 0;
+      case "low": return n<=18 ? 2 : 0;
+      case "high": return n>=19 ? 2 : 0;
+      case "d1": return n<=12 ? 3 : 0;
+      case "d2": return (n>=13 && n<=24) ? 3 : 0;
+      case "d3": return n>=25 ? 3 : 0;
+      case "c1": return n%3===1 ? 3 : 0;
+      case "c2": return n%3===2 ? 3 : 0;
+      case "c3": return n%3===0 ? 3 : 0;
+    }
+    return 0;
+  }
+};
+function drawWheel(cv){
+  const c = cv.getContext("2d"), W = cv.width, C = W/2, step = Math.PI*2/37;
+  const R = C-2, Ro = R-14, Ri = R*0.66;
+  c.clearRect(0,0,W,W);
+  const g = c.createRadialGradient(C,C,Ri,C,C,R); g.addColorStop(0,"#8a6508"); g.addColorStop(1,"#f5c542");
+  c.beginPath(); c.arc(C,C,R,0,7); c.fillStyle = g; c.fill();
+  for(let i=0;i<37;i++){
+    const n = ROU.order[i], a0 = -Math.PI/2 + i*step, a1 = a0 + step, col = ROU.color(n);
+    c.beginPath(); c.arc(C,C,Ro,a0,a1); c.arc(C,C,Ri,a1,a0,true); c.closePath();
+    c.fillStyle = col==="red" ? "#b3202e" : col==="black" ? "#141418" : "#12853f"; c.fill();
+    c.strokeStyle = "#d9b24a"; c.lineWidth = 2; c.stroke();
+    c.save(); c.translate(C,C); c.rotate(a0 + step/2 + Math.PI/2);
+    c.fillStyle = "#fff"; c.font = "bold 25px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText(String(n), 0, -(Ri + (Ro-Ri)/2)); c.restore();
+  }
+  const g2 = c.createRadialGradient(C,C,0,C,C,Ri); g2.addColorStop(0,"#1c1c22"); g2.addColorStop(1,"#0b0b0d");
+  c.beginPath(); c.arc(C,C,Ri-2,0,7); c.fillStyle = g2; c.fill();
+  c.strokeStyle = "#b8860b"; c.lineWidth = 4; c.stroke();
+}
+const RouletteView = {
+  V:{bets:{}, stack:[], last:null, chip:10, busy:false, rot:0, ballRot:0, timer:0},
+  CHIPS:[10,50,100,500,1000],
+  html(){
+    const cell = (key, main, cls, sub)=>`<button class="rcell ${cls}" data-action="rbet" data-arg="${key}" data-key="${key}">${main}${sub?`<small>${sub}</small>`:""}<span class="cb"></span></button>`;
+    let nums = ""; for(let r=0;r<12;r++) for(let c=1;c<=3;c++){ const n = r*3+c; nums += cell("n:"+n, n, ROU.color(n)); }
+    return `<div class="wheelwrap">
+        <div class="pointer"></div>
+        <div class="wheelrot" id="wheelRot"><canvas id="wheelCv" width="640" height="640"></canvas></div>
+        <div class="ballrot" id="ballRot"><div class="ball"></div></div>
+        <div class="hub" id="hub"><span id="hubN">?</span></div>
+      </div>
+      <div class="resmsg" id="rMsg">Выберите фишку и ставьте на поле</div>
+      <div id="hist">${histHtml("roulette")}</div>
+      <h2 style="margin-top:14px">Ставки</h2>
+      <div class="rg n3">${cell("red","Красное","red")}${cell("black","Чёрное","black")}${cell("even","Чёт","out")}</div>
+      <div class="rg n3">${cell("odd","Нечёт","out")}${cell("low","1–18","out")}${cell("high","19–36","out")}</div>
+      <div class="rg n3">${cell("d1","1–12","out","2:1")}${cell("d2","13–24","out","2:1")}${cell("d3","25–36","out","2:1")}</div>
+      <div class="rg"><button class="rcell green" data-action="rbet" data-arg="n:0" data-key="n:0">0<small>35:1</small><span class="cb"></span></button></div>
+      <div class="rg n3">${nums}</div>
+      <div class="rg n3">${cell("c1","Колонка 1","out","2:1")}${cell("c2","Колонка 2","out","2:1")}${cell("c3","Колонка 3","out","2:1")}</div>
+      <div class="rctl" id="rctl">
+        <div class="row" style="margin-bottom:8px"><span>Поставлено: <b id="rTotal" style="color:var(--goldsoft);font-size:18px">0</b> RC</span><span>Баланс: <b class="js-bal" style="color:var(--goldsoft)">${fmt(S.balance)}</b></span></div>
+        <div class="presets">${this.CHIPS.map(v=>`<button class="pbtn" data-action="rchip" data-arg="${v}" data-chip="${v}">${v}</button>`).join("")}</div>
+        <div class="acts"><button class="pbtn" data-action="rundo" aria-label="Отменить последнюю">↩</button><button class="pbtn" data-action="rclear" aria-label="Очистить">✕</button><button class="pbtn" data-action="rrepeat" aria-label="Повторить прошлую ставку">⟳</button><button class="btn" id="rSpin" data-action="rspin">🎡 Крутить</button></div>
+      </div>`;
+  },
+  mount(){
+    const V = this.V; V.bets = {}; V.stack = []; V.busy = false; V.rot = 0; V.ballRot = 0; V.timer = 0;
+    if(!this.CHIPS.includes(V.chip)) V.chip = 10;
+    drawWheel($("#wheelCv")); this.refresh();
+  },
+  unmount(){
+    const V = this.V; clearTimeout(V.timer); V.timer = 0; V.busy = false;
+    const p = S.pending; if(p && p.game==="roulette") Economy.settle(p.payout, p.info);
+  },
+  total(){ return Object.values(this.V.bets).reduce((a,b)=>a+b,0); },
+  refresh(){
+    const V = this.V;
+    document.querySelectorAll(".rcell[data-key]").forEach(el=>{
+      const a = V.bets[el.dataset.key] || 0;
+      el.classList.toggle("has", a>0); el.querySelector(".cb").textContent = a>0 ? fmtShort(a) : "";
+    });
+    document.querySelectorAll("[data-chip]").forEach(el=>el.classList.toggle("on", parseInt(el.dataset.chip,10)===V.chip));
+    const t = $("#rTotal"); if(t) t.textContent = fmt(this.total());
+    const rc = $("#rctl"); if(rc) rc.classList.toggle("locked", V.busy);
+    document.querySelectorAll(".js-bal").forEach(e=>e.textContent = fmt(S.balance));
+  },
+  chip(v){ if(this.V.busy) return; v = parseInt(v,10); if(this.CHIPS.includes(v)){ this.V.chip = v; this.refresh(); } },
+  place(key){
+    const V = this.V; if(V.busy || S.pending || !ROU.valid(key)) return;
+    if(S.balance <= 0){ Bankruptcy.check(true); return; }
+    if(this.total() + V.chip > S.balance){ toast("Не хватает RC"); Sound.error(); haptic("error"); return; }
+    V.bets[key] = (V.bets[key]||0) + V.chip; V.stack.push({key, add:V.chip}); this.refresh();
+  },
+  undo(){
+    const V = this.V; if(V.busy) return; const s = V.stack.pop(); if(!s) return;
+    V.bets[s.key] -= s.add; if(V.bets[s.key] <= 0) delete V.bets[s.key]; this.refresh();
+  },
+  clear(){ const V = this.V; if(V.busy) return; V.bets = {}; V.stack = []; this.refresh(); },
+  repeat(){
+    const V = this.V; if(V.busy || S.pending) return;
+    if(!V.last){ toast("Нет прошлой ставки"); return; }
+    const sum = Object.values(V.last).reduce((a,b)=>a+b,0);
+    if(sum > S.balance){ toast("Не хватает RC"); Sound.error(); return; }
+    V.bets = Object.assign({}, V.last); V.stack = Object.entries(V.last).map(([key,add])=>({key,add})); this.refresh();
+  },
+  spin(){
+    const V = this.V; if(V.busy || S.pending) return;
+    const total = this.total();
+    if(total < 1){ toast("Сделайте ставку"); Sound.error(); return; }
+    if(total > S.balance){ toast("Не хватает RC"); Sound.error(); return; }
+    const n = ROU.pick();                                     // результат определён ДО анимации
+    let payout = 0; for(const k in V.bets) payout += V.bets[k] * ROU.ret(k, n);
+    if(!Economy.begin("roulette", total, {payout, info:{b:String(n), c:ROU.color(n), n}})){ Sound.error(); return; }
+    V.busy = true; this.refresh();
+    document.querySelectorAll(".rcell.hit").forEach(e=>e.classList.remove("hit"));
+    gameMsg("#rMsg","Колесо вращается…");
+    const hub = $("#hub"); hub.className = "hub"; $("#hubN").textContent = "?";
+    const step = 360/37, idx = ROU.order.indexOf(n);
+    const point = (idx + 0.5)*step + (Rand.float()-0.5)*step*0.7;      // точка внутри нужного кармана
+    const d = (((-point) % 360) + 360) % 360, cur = ((V.rot % 360) + 360) % 360;
+    V.rot += ((d - cur + 360) % 360) + 360*6; V.ballRot -= 360*4;
+    const dur = S.settings.animations ? 5000 : 400;
+    [$("#wheelRot"), $("#ballRot")].forEach(el=>el.style.transitionDuration = dur+"ms");
+    $("#wheelRot").style.transform = `rotate(${V.rot}deg)`;
+    $("#ballRot").style.transform = `rotate(${V.ballRot}deg)`;
+    let tick = 0; const tk = setInterval(()=>{ if(++tick > 14 || !V.busy) clearInterval(tk); else Sound.beep(700,0.02,"square",0.015); }, 280);
+    V.timer = setTimeout(()=>this.finish(), dur + 250);
+  },
+  finish(){
+    const V = this.V; V.timer = 0;
+    const p = S.pending; if(!p || p.game!=="roulette"){ V.busy = false; this.refresh(); return; }
+    const n = p.info.n, bets = V.bets;
+    const r = Economy.settle(p.payout, p.info);
+    V.last = bets; V.bets = {}; V.stack = []; V.busy = false;
+    const hub = $("#hub"); hub.className = "hub " + ROU.color(n); $("#hubN").textContent = n;
+    Object.keys(bets).forEach(k=>{ if(ROU.ret(k,n) > 0){ const el = document.querySelector(`.rcell[data-key="${k}"]`); if(el) el.classList.add("hit"); } });
+    const cname = {red:"красное",black:"чёрное",green:"зеро"}[ROU.color(n)];
+    if(r){
+      const net = r.payout - r.bet;
+      if(net > 0){ gameMsg("#rMsg", `🎉 Выпало ${n} (${cname}). Выигрыш +${fmt(net)} RC`, "win"); Sound.win(); haptic(); }
+      else if(net === 0){ gameMsg("#rMsg", `Выпало ${n} (${cname}). Ставка возвращена`, "win"); }
+      else { gameMsg("#rMsg", `Выпало ${n} (${cname}). Проигрыш −${fmt(-net)} RC`, "lose"); }
+    }
+    $("#hist").innerHTML = histHtml("roulette"); this.refresh();
+  }
+};
+
+/* ==========================================================
+   ПОКЕР (Texas Hold'em, 4 игрока) · ДУРАК (3 игрока, подкидной) · КОЛЕСО УДАЧИ
+   Деньги трогают только Economy.begin (ставка), Economy.raise (докладка в покере)
+   и Economy.settle (выплата, один раз). Выход с экрана посреди раунда = поражение.
+   ========================================================== */
+const SU=["♠️","♥️","♦️","♣️"], RL={11:"В",12:"Д",13:"К",14:"Т"};
+const cardH=(c,x)=>!c?`<div class="pc bk"></div>`:`<div class="pc ${c.s===1||c.s===2?"r":""} ${x||""}"><b>${RL[c.r]||c.r}</b><small>${SU[c.s]}</small></div>`;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Rand.int(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+/* ---------- ПОКЕР ---------- */
+const PK={
+  NAMES:["Старшая карта","Пара","Две пары","Тройка","Стрит","Флеш","Фулл-хаус","Каре","Стрит-флеш"],
+  newDeck(){const d=[];for(let s=0;s<4;s++)for(let r=2;r<15;r++)d.push({r,s});return shuffle(d);},
+  ev5(c){
+    const rs=c.map(x=>x.r).sort((a,b)=>b-a),fl=c.every(x=>x.s===c[0].s),cn={};
+    rs.forEach(r=>cn[r]=(cn[r]||0)+1);
+    const g=Object.keys(cn).map(Number).sort((a,b)=>cn[b]-cn[a]||b-a),k=cn[g[0]],k2=cn[g[1]]||0;
+    let st=0;if(g.length===5){if(rs[0]-rs[4]===4)st=rs[0];else if(rs[0]===14&&rs[1]===5)st=5;}
+    const cat=st&&fl?8:k===4?7:k===3&&k2===2?6:fl?5:st?4:k===3?3:k===2&&k2===2?2:k===2?1:0;
+    const t=st?[st]:g;let v=cat;for(let i=0;i<5;i++)v=v*15+(t[i]||0);return v;
+  },
+  best(cs){
+    const n=cs.length;if(n===5)return this.ev5(cs);let b=0;
+    for(let i=0;i<n;i++){
+      if(n===6){const v=this.ev5(cs.filter((_,k)=>k!==i));if(v>b)b=v;}
+      else for(let j=i+1;j<n;j++){const v=this.ev5(cs.filter((_,k)=>k!==i&&k!==j));if(v>b)b=v;}
+    }
+    return b;
+  },
+  cat(v){return Math.floor(v/759375);},
+  /* оценка шансов на победу: случайные руки соперников и недостающие карты стола */
+  eq(h,b,n,N){
+    const used=new Set(h.concat(b).map(c=>c.r*4+c.s)),rest=[];
+    for(let s=0;s<4;s++)for(let r=2;r<15;r++)if(!used.has(r*4+s))rest.push({r,s});
+    const nb=5-b.length;let w=0;
+    for(let t=0;t<N;t++){
+      const need=nb+2*n;
+      for(let i=0;i<need;i++){const j=i+Rand.int(rest.length-i);[rest[i],rest[j]]=[rest[j],rest[i]];}
+      const bd=b.concat(rest.slice(0,nb)),me=this.best(h.concat(bd));let ok=1,tie=0;
+      for(let o=0;o<n;o++){const v=this.best(rest.slice(nb+2*o,nb+2*o+2).concat(bd));if(v>me){ok=0;break;}if(v===me)tie=1;}
+      w+=ok?(tie?0.5:1):0;
+    }
+    return w/N;
+  }
+};
+const PokerView={
+  V:{P:null,t:[]},
+  html(){
+    return `<div class="card" style="padding:12px"><div class="pk-seats" id="pkSeats"></div>
+      <div class="pk-pot">🏆 Банк: <b id="pkPot">0</b> RC</div>
+      <div class="cards" id="pkBoard">${'<div class="pc e"></div>'.repeat(5)}</div>
+      <div id="pkMine"></div></div>
+      <div class="resmsg" id="pkMsg">Ставка = большой блайнд. Вы — большой блайнд, против вас 3 бота.</div>
+      <div id="pkAct"></div>${Bet.html()}
+      <button class="btn" id="pkDeal" data-action="pkdeal">♠️ Раздать</button>
+      <h2>Правила</h2><div class="card"><p class="sub" style="margin:0">Техасский холдем на 4 игроков. Ваша ставка — большой блайнд, малый — вдвое меньше. Стек каждого — до 40 больших блайндов (не больше вашего баланса). Действия: сбросить, чек/уравнять, повысить, ва-банк. Побеждает лучшая комбинация из 5 карт; при равенстве банк делится. Выход из раздачи — сброс карт.</p></div>
+      <h2>Последние раздачи</h2><div id="hist">${histHtml("poker")}</div>`;
+  },
+  mount(){this.V.P=null;this.V.t=[];},
+  unmount(){
+    this.V.t.forEach(clearTimeout);this.V.t=[];this.V.P=null;
+    const p=S.pending;if(p&&p.game==="poker")Economy.settle(p.payout,p.info);
+  },
+  later(f,ms){this.V.t.push(setTimeout(f,S.settings.animations?ms:60));},
+  deal(){
+    const V=this.V;if((V.P&&!V.P.over)||S.pending)return;
+    const BB=Bet.validate();if(!BB)return;
+    const K=Math.min(S.balance,40*BB),SB=Math.max(1,Math.floor(BB/2));
+    if(!Economy.begin("poker",BB,{payout:0,info:{b:"✖",c:"lose",d:"Выход из раздачи"}})){Sound.error();return;}
+    Bet.lock(true);$("#pkDeal").disabled=true;gameMsg("#pkMsg","");
+    const mk=(n,ic,a)=>({n,ic,hole:[],stack:K,bet:0,tot:0,fold:false,allin:false,acted:false,agr:a});
+    const P=V.P={pl:[mk("Вы",avatarIcon(),1),mk("Лев","🦁",1.1),mk("Волк","🐺",0.8),mk("Орёл","🦅",1)],
+      board:[],deck:PK.newDeck(),ph:0,bet:BB,raises:0,last:BB,cur:1,BB,SB,over:false,show:false};
+    P.pl.forEach(p=>{p.hole=[P.deck.pop(),P.deck.pop()];});
+    const me=P.pl[0];me.stack=K-BB;me.bet=me.tot=BB;if(me.stack===0)me.allin=true;   // ставка уже списана в Economy.begin
+    this.pay(3,SB);
+    this.adv0();
+  },
+  adv0(){   // первый ход после блайндов: место 1; если ходить некому — доводим до вскрытия
+    const P=this.V.P,can=P.pl.filter(p=>!p.fold&&!p.allin);
+    if(can.length<2&&can.every(p=>p.bet>=P.bet)){this.draw();this.later(()=>this.street(),1100);return;}
+    this.run();
+  },
+  pay(i,n){
+    const P=this.V.P,p=P.pl[i];n=Math.min(n,p.stack);if(n<=0)return 0;
+    if(i===0&&!Economy.raise(n))return 0;
+    p.stack-=n;p.bet+=n;p.tot+=n;if(p.stack===0)p.allin=true;return n;
+  },
+  act(i,k,amt){
+    const P=this.V.P;if(!P||P.over||P.cur!==i)return;const p=P.pl[i];
+    if(k==="f")p.fold=true;
+    else if(k==="c")this.pay(i,P.bet-p.bet);
+    else{
+      this.pay(i,P.bet-p.bet+amt);
+      if(p.bet>P.bet){P.last=Math.max(P.BB,p.bet-P.bet);P.bet=p.bet;P.raises++;P.pl.forEach(q=>{if(q!==p)q.acted=false;});}
+    }
+    p.acted=true;this.adv();
+  },
+  adv(){
+    const P=this.V.P,al=P.pl.filter(p=>!p.fold);
+    if(al.length===1)return this.award([al[0]],false);
+    const can=al.filter(p=>!p.allin);
+    const done=can.length===0||(can.length===1&&can[0].bet>=P.bet)||can.every(p=>p.acted&&p.bet===P.bet);
+    if(!done){let i=P.cur;do{i=(i+1)%4;}while(P.pl[i].fold||P.pl[i].allin);P.cur=i;return this.run();}
+    this.street();
+  },
+  street(){
+    const P=this.V.P;if(!P||P.over)return;
+    P.pl.forEach(p=>{p.bet=0;p.acted=false;});P.bet=0;P.raises=0;P.last=P.BB;P.ph++;
+    if(P.ph===1)P.board.push(P.deck.pop(),P.deck.pop(),P.deck.pop());else if(P.ph<4)P.board.push(P.deck.pop());
+    if(P.ph>=4)return this.showdown();
+    const can=P.pl.filter(p=>!p.fold&&!p.allin);
+    if(can.length<2){this.draw();this.later(()=>this.street(),1100);return;}   // все в ва-банке — открываем карты до конца
+    let i=3;while(P.pl[i].fold||P.pl[i].allin)i=(i+1)%4;P.cur=i;this.run();
+  },
+  run(){
+    const P=this.V.P;if(!P||P.over)return;this.draw();
+    if(P.cur!==0){const i=P.cur;this.later(()=>this.bot(i),900);}
+  },
+  bot(i){
+    const P=this.V.P;if(!P||P.over||P.cur!==i)return;
+    const p=P.pl[i],toCall=Math.min(P.bet-p.bet,p.stack),pot=P.pl.reduce((a,x)=>a+x.tot,0),
+      opp=P.pl.filter(x=>!x.fold&&x!==p).length,e=PK.eq(p.hole,P.board,opp,50),
+      strong=1/(opp+1)+0.3/p.agr,can=P.raises<4&&p.stack>toCall,
+      amt=Math.min(Math.max(P.last,Math.floor(pot*(e>strong+0.15?0.8:0.5))),p.stack-toCall);
+    if(toCall===0){
+      if(can&&((e>strong&&Rand.float()<0.65*p.agr)||Rand.float()<0.05))return this.act(i,"r",amt);
+      return this.act(i,"c");
+    }
+    const need=toCall/(pot+toCall);
+    if(e<need*0.9&&Rand.float()>0.05)return this.act(i,"f");
+    if(can&&e>strong&&Rand.float()<0.5*p.agr)return this.act(i,"r",amt);
+    this.act(i,"c");
+  },
+  act0(a){
+    const P=this.V.P;if(!P||P.over||P.cur!==0)return;
+    const me=P.pl[0],toCall=Math.min(P.bet-me.bet,me.stack),R=Math.max(P.last,P.BB);
+    if(a==="f")return this.foldMe();
+    if(a==="c")return this.act(0,"c");
+    if(P.raises>=4||me.stack<=toCall)return;
+    const amt=a==="r1"?R:a==="r2"?R*2:me.stack-toCall;
+    this.act(0,"r",Math.min(amt,me.stack-toCall));
+  },
+  foldMe(){
+    const P=this.V.P;P.pl[0].fold=true;P.over=true;this.V.t.forEach(clearTimeout);this.V.t=[];
+    const r=Economy.settle(0,{b:"✖",c:"lose",d:"Сброс карт"});
+    this.end(r?`🏳️ Вы сбросили карты: −${fmt(r.bet)} RC`:"","lose");
+  },
+  showdown(){
+    const P=this.V.P;P.show=true;const al=P.pl.filter(p=>!p.fold);
+    al.forEach(p=>{p.v=PK.best(p.hole.concat(P.board));});
+    const mx=Math.max(...al.map(p=>p.v));this.award(al.filter(p=>p.v===mx),true);
+  },
+  award(ws,sd){
+    const P=this.V.P;if(!P||P.over)return;P.over=true;this.V.t.forEach(clearTimeout);this.V.t=[];
+    const me=P.pl[0],pot=P.pl.reduce((a,p)=>a+p.tot,0),sh=Math.floor(pot/ws.length),won=ws.includes(me);
+    const pay=won?sh+(ws[0]===me?pot-sh*ws.length:0):0;
+    const hn=p=>sd?PK.NAMES[PK.cat(p.v)]:"";
+    const cls=pay>me.tot?"win":pay===me.tot?"push":"lose";
+    const r=Economy.settle(pay,{b:won?"🏆":"✖",c:cls,d:won?(hn(me)||"Все сбросили"):("Победил "+ws[0].n)});
+    let msg="";
+    if(r){
+      const net=r.payout-r.bet;
+      if(won&&ws.length>1)msg=`🤝 Банк разделён (${hn(me)}): ${net>=0?"+":"−"}${fmt(Math.abs(net))} RC`;
+      else if(won)msg=sd?`🎉 Ваша комбинация: ${hn(me)}. Выигрыш +${fmt(net)} RC`:`🎉 Все сбросили карты — банк ваш: +${fmt(net)} RC`;
+      else msg=`😔 Победил ${ws[0].n}${sd?" ("+hn(ws[0])+")":""}: −${fmt(r.bet)} RC`;
+      if(won&&net>0){Sound.win();haptic();}
+    }
+    this.end(msg,won&&pay>me.tot?"win":won?"push":"lose");
+  },
+  end(msg,cls){
+    gameMsg("#pkMsg",msg,cls);this.draw();Bet.lock(false);
+    const d=$("#pkDeal");if(d){d.disabled=false;d.textContent="♠️ Новая раздача";}
+    const h=$("#hist");if(h)h.innerHTML=histHtml("poker");
+  },
+  draw(){
+    const P=this.V.P;if(!P||!$("#pkSeats"))return;const me=P.pl[0];
+    const lab=["","","Дилер 🅳","Малый блайнд"];
+    $("#pkSeats").innerHTML=[1,2,3].map(i=>{const p=P.pl[i];
+      return `<div class="seat ${P.cur===i&&!P.over?"act":""} ${p.fold?"fold":""}"><b>${p.ic} ${p.n}</b><small>${lab[i]||"&nbsp;"}</small>
+        <div class="cards">${p.hole.map(c=>P.show&&!p.fold?cardH(c):cardH(null)).join("")}</div>${fmt(p.stack)} RC
+        <small>${p.fold?"Сброс":P.show&&!p.fold?PK.NAMES[PK.cat(p.v)]:p.allin?"Ва-банк":p.bet?"Ставка "+fmt(p.bet):"&nbsp;"}</small></div>`;}).join("");
+    $("#pkPot").textContent=fmt(P.pl.reduce((a,p)=>a+p.tot,0));
+    $("#pkBoard").innerHTML=P.board.map(c=>cardH(c)).join("")+'<div class="pc e"></div>'.repeat(5-P.board.length);
+    const combo=P.board.length>=3&&!me.fold?`<br>Ваша комбинация: <b style="color:var(--goldsoft)">${PK.NAMES[PK.cat(PK.best(me.hole.concat(P.board)))]}</b>`:"";
+    $("#pkMine").innerHTML=`<div class="cards">${me.hole.map(c=>cardH(c)).join("")}</div>
+      <div class="sub" style="text-align:center">Ваш стек: ${fmt(me.stack)} RC · ставка в круге: ${fmt(me.bet)}${combo}</div>`;
+    const A=$("#pkAct");
+    if(P.over||P.cur!==0){A.innerHTML=P.over?"":`<div class="sub" style="text-align:center;margin-bottom:8px">🤔 Ходит ${P.pl[P.cur].n}…</div>`;return;}
+    const toCall=Math.min(P.bet-me.bet,me.stack),R=Math.max(P.last,P.BB),can=P.raises<4&&me.stack>toCall;
+    const b=(a,t,c)=>`<button class="btn ${c||""}" data-action="pkact" data-arg="${a}">${t}</button>`;
+    A.innerHTML=`<div class="pkacts">${b("f","❌ Сброс","danger")}${b("c",toCall?"✅ Уравнять "+fmt(toCall):"✋ Чек")}</div>`+
+      (can?`<div class="pkacts">${toCall+R<me.stack?b("r1","⬆️ +"+fmt(R),"sec"):""}${toCall+2*R<me.stack?b("r2","⬆️ +"+fmt(2*R),"sec"):""}${b("r3","🔥 Ва-банк","sec")}</div>`:"");
+  }
+};
+
+/* ---------- ДУРАК (подкидной, 36 карт, 3 игрока) ---------- */
+const DK={
+  beats(d,a,t){return d.s===a.s?d.r>a.r:d.s===t&&a.s!==t;},
+  v(c,t){return c.r+(c.s===t?20:0);},
+  who(i){return i===0?{n:"Вы",ic:avatarIcon()}:i===1?{n:"Лев",ic:"🦁"}:{n:"Волк",ic:"🐺"};}
+};
+const DurakView={
+  V:{D:null,t:[]},
+  html(){
+    return `<div class="card" style="padding:12px"><div class="pk-seats" id="dkTop"></div>
+      <div class="dk-tab" id="dkTab"><span class="sub">Нажмите «Раздать»</span></div>
+      <div class="sub" id="dkMe" style="text-align:center"></div>
+      <div class="hand" id="dkHand"></div></div>
+      <div class="resmsg" id="dkMsg">Классический подкидной дурак против двух ботов.</div>
+      <button class="btn sec" id="dkBtn" data-action="dkb" style="display:none;margin-bottom:10px"></button>
+      ${Bet.html()}
+      <button class="btn" id="dkDeal" data-action="dkdeal">🃏 Раздать</button>
+      <h2>Правила</h2><div class="card"><p class="sub" style="margin:0">36 карт, по 6 каждому, козырь определяет масть. Бейте карту старшей картой той же масти или козырем. Подкидывать можно карты тех же рангов, что уже на столе (не больше 6, в первой атаке — 5, и не больше карт у защитника). Не смогли или не хотите бить — «Беру». Не остались в дураках — выигрыш ×1.5 ставки, дурак — ставка проиграна, одновременный выход всех — возврат ставки. Выход из партии — поражение.</p></div>
+      <h2>Последние партии</h2><div id="hist">${histHtml("durak")}</div>`;
+  },
+  mount(){this.V.D=null;this.V.t=[];},
+  unmount(){
+    this.V.t.forEach(clearTimeout);this.V.t=[];this.V.D=null;
+    const p=S.pending;if(p&&p.game==="durak")Economy.settle(p.payout,p.info);
+  },
+  later(f,ms){this.V.t.push(setTimeout(f,S.settings.animations?ms:60));},
+  nx(i){const D=this.V.D;let j=(i+1)%3;while(D.out[j])j=(j+1)%3;return j;},
+  thr(){const D=this.V.D,l=[];let i=D.att;for(let n=0;n<3;n++){if(!D.out[i]&&i!==D.def)l.push(i);i=(i+1)%3;}return l;},
+  start(){
+    const V=this.V;if((V.D&&!V.D.over)||S.pending)return;
+    const bet=Bet.validate();if(!bet)return;
+    if(!Economy.begin("durak",bet,{payout:0,info:{b:"🤡",c:"lose",d:"Выход из партии"}})){Sound.error();return;}
+    Bet.lock(true);$("#dkDeal").disabled=true;gameMsg("#dkMsg","");
+    const dk=[];for(let s=0;s<4;s++)for(let r=6;r<15;r++)dk.push({r,s});shuffle(dk);
+    const D=V.D={h:[[],[],[]],deck:dk,tc:dk[0],tr:dk[0].s,out:[false,false,false],att:0,def:1,tab:[],th:0,pass:{},taking:false,cap:5,first:true,over:false,sel:-1,phase:"att"};
+    for(let n=0;n<6;n++)for(let i=0;i<3;i++)D.h[i].push(D.deck.pop());
+    let lo=99,att=Rand.int(3);
+    D.h.forEach((h,i)=>h.forEach(c=>{if(c.s===D.tr&&c.r<lo){lo=c.r;att=i;}}));
+    D.att=att;this.bout();this.go();
+  },
+  bout(){const D=this.V.D;D.def=this.nx(D.att);D.tab=[];D.pass={};D.taking=false;D.sel=-1;D.cap=Math.min(D.first?5:6,D.h[D.def].length);D.th=D.att;D.phase="att";},
+  legal(i){
+    const D=this.V.D,h=D.h[i];if(D.tab.length>=D.cap)return[];
+    if(!D.tab.length)return h.map((_,k)=>k);
+    const rs=new Set();D.tab.forEach(x=>{rs.add(x.a.r);if(x.d)rs.add(x.d.r);});
+    return h.map((c,k)=>rs.has(c.r)?k:-1).filter(k=>k>=0);
+  },
+  go(){
+    const D=this.V.D;if(!D||D.over)return;this.draw();
+    if(D.phase==="def"){if(D.def!==0)this.later(()=>this.botDef(),900);return;}
+    const i=D.th;
+    if(i===0){if(D.tab.length&&!this.legal(0).length)this.later(()=>this.pass(0),700);return;}
+    this.later(()=>this.botThrow(i),900);
+  },
+  play(i,k){
+    const D=this.V.D;if(!D||D.over||D.phase==="def"||D.th!==i||!this.legal(i).includes(k))return false;
+    D.tab.push({a:D.h[i].splice(k,1)[0],d:null});D.pass={};
+    if(D.taking)D.th=D.att;else D.phase="def";
+    this.go();return true;
+  },
+  pass(i){
+    const D=this.V.D;if(!D||D.over||D.phase==="def"||D.th!==i||!D.tab.length)return;
+    D.pass[i]=1;const t=this.thr().find(x=>!D.pass[x]);
+    if(t===undefined)return this.endBout();
+    D.th=t;this.go();
+  },
+  defend(i,k,ti){
+    const D=this.V.D;if(!D||D.over||D.phase!=="def"||D.def!==i)return false;
+    const x=D.tab[ti],c=D.h[i][k];if(!x||x.d||!c||!DK.beats(c,x.a,D.tr))return false;
+    x.d=D.h[i].splice(k,1)[0];D.sel=-1;
+    if(D.tab.every(y=>y.d)){
+      if(!D.h[i].length||D.tab.length>=D.cap)return this.endBout();
+      D.phase="att";D.th=D.att;D.pass={};
+    }
+    this.go();return true;
+  },
+  take(){
+    const D=this.V.D;if(!D||D.over||D.phase!=="def")return;
+    D.taking=true;D.phase="att";D.th=D.att;D.pass={};this.go();
+  },
+  endBout(){
+    const D=this.V.D;if(!D||D.over)return;
+    if(D.taking)D.tab.forEach(x=>{D.h[D.def].push(x.a);if(x.d)D.h[D.def].push(x.d);});
+    D.tab=[];D.first=false;
+    const ord=[];let i=D.att;for(let n=0;n<3;n++){ord.push(i);i=(i+1)%3;}
+    ord.filter(x=>x!==D.def).concat(D.def).forEach(x=>{while(D.h[x].length<6&&D.deck.length)D.h[x].push(D.deck.pop());});
+    for(let x=0;x<3;x++)if(!D.h[x].length&&!D.deck.length)D.out[x]=true;
+    const left=[0,1,2].filter(x=>!D.out[x]);
+    if(!left.length)return this.finish("draw");
+    if(D.out[0])return this.finish("win");
+    if(left.length===1)return this.finish("lose");
+    let na=D.taking?(D.def+1)%3:D.def;while(D.out[na])na=(na+1)%3;
+    D.att=na;this.bout();this.go();
+  },
+  finish(res){
+    const D=this.V.D;if(!D||D.over)return;D.over=true;this.V.t.forEach(clearTimeout);this.V.t=[];
+    const p=S.pending,bet=p?p.bet:0;let pay=0,b="🤡",c="lose",d="Вы остались в дураках",msg;
+    if(res==="draw"){pay=bet;b="🤝";c="push";d="Ничья";msg="🤝 Ничья — ставка возвращена";}
+    else if(res==="win"){pay=Math.floor(bet*1.5);b="🏆";c="win";d="Вы не дурак";msg=`🏆 Вы вышли из игры — не дурак! +${fmt(pay-bet)} RC`;Sound.win();haptic();}
+    else msg=`🤡 Вы остались в дураках: −${fmt(bet)} RC`;
+    Economy.settle(pay,{b,c,d});
+    this.draw();Bet.lock(false);gameMsg("#dkMsg",msg,c==="lose"?"lose":"win");
+    const dd=$("#dkDeal");if(dd){dd.disabled=false;dd.textContent="🃏 Новая партия";}
+    const h=$("#hist");if(h)h.innerHTML=histHtml("durak");
+  },
+  botThrow(i){
+    const D=this.V.D;if(!D||D.over||D.phase==="def"||D.th!==i)return;
+    const lg=this.legal(i),h=D.h[i];let k=-1;
+    const val=x=>DK.v(h[x],D.tr),low=a=>a.reduce((m,x)=>m<0||val(x)<val(m)?x:m,-1);
+    if(!D.tab.length)k=low(lg);
+    else{const cand=lg.filter(x=>h[x].s!==D.tr||h[x].r<=10);if(cand.length&&(D.taking||Rand.float()<0.8))k=low(cand);}
+    if(k<0)return this.pass(i);
+    this.play(i,k);
+  },
+  botDef(){
+    const D=this.V.D;if(!D||D.over||D.phase!=="def"||D.def===0)return;
+    const i=D.def,h=D.h[i],ti=D.tab.findIndex(x=>!x.d);if(ti<0)return;
+    const a=D.tab[ti].a;let best=-1;
+    h.forEach((c,k)=>{if(DK.beats(c,a,D.tr)&&(best<0||DK.v(c,D.tr)<DK.v(h[best],D.tr)))best=k;});
+    if(best<0)return this.take();
+    const c=h[best];
+    if(c.s===D.tr&&a.s!==D.tr&&c.r>=12&&D.deck.length>4)return this.take();   // не тратит старший козырь на мелочь
+    this.defend(i,best,ti);
+  },
+  tapCard(k){
+    const D=this.V.D;if(!D||D.over)return;const c=D.h[0][k];if(!c)return;
+    if(D.phase==="def"){
+      if(D.def!==0)return;
+      let ti=(D.sel>=0&&D.tab[D.sel]&&!D.tab[D.sel].d)?D.sel:-1;
+      if(ti<0||!DK.beats(c,D.tab[ti].a,D.tr))ti=D.tab.findIndex(x=>!x.d&&DK.beats(c,x.a,D.tr));
+      if(ti<0){toast("Этой картой не отбить");Sound.error();return;}
+      this.defend(0,k,ti);
+    }else if(D.th===0){
+      if(!this.play(0,k)){toast(D.tab.length?"Подкинуть можно только карту того же ранга":"Сейчас нельзя");Sound.error();}
+    }
+  },
+  tapTab(ti){const D=this.V.D;if(!D||D.over||D.phase!=="def"||D.def!==0)return;const x=D.tab[ti];if(x&&!x.d){D.sel=D.sel===ti?-1:ti;this.draw();}},
+  btn(){
+    const D=this.V.D;if(!D||D.over)return;
+    if(D.phase==="def"&&D.def===0)this.take();else if(D.phase==="att"&&D.th===0&&D.tab.length)this.pass(0);
+  },
+  draw(){
+    const D=this.V.D;if(!D||!$("#dkTop"))return;
+    D.h[0].sort((a,b)=>(a.s===D.tr)-(b.s===D.tr)||a.s-b.s||a.r-b.r);
+    const role=i=>D.over||D.out[i]?"":D.def===i?"🛡️":D.att===i?"⚔️":"";
+    const turn=i=>!D.over&&!D.out[i]&&((D.phase==="def"&&D.def===i)||(D.phase!=="def"&&D.th===i));
+    const seat=i=>{const w=DK.who(i);return `<div class="seat ${D.out[i]?"fold":""} ${turn(i)?"act":""}"><b>${w.ic} ${w.n} ${role(i)}</b><div class="dkn">🂠 ${D.h[i].length}</div><small>${D.out[i]?"Вышел":"&nbsp;"}</small></div>`;};
+    $("#dkTop").innerHTML=seat(1)+`<div class="seat"><b>Козырь ${SU[D.tr]}</b>${D.deck.length?cardH(D.tc):'<div class="pc e"></div>'}<small>Колода: ${D.deck.length}</small></div>`+seat(2);
+    $("#dkTab").innerHTML=D.tab.length?D.tab.map((x,ti)=>`<div class="tp">${x.d?cardH(x.a):`<button class="pcb ${D.sel===ti?"sel":""}" data-action="dkt" data-arg="${ti}">${cardH(x.a)}</button>`}${x.d?cardH(x.d,"dd"):""}</div>`).join(""):`<span class="sub">Стол пуст</span>`;
+    const ok=new Set();
+    if(!D.over&&D.phase==="def"&&D.def===0)D.h[0].forEach((c,k)=>{if(D.tab.some(x=>!x.d&&DK.beats(c,x.a,D.tr)))ok.add(k);});
+    else if(!D.over&&D.phase==="att"&&D.th===0)this.legal(0).forEach(k=>ok.add(k));
+    $("#dkHand").innerHTML=D.h[0].map((c,k)=>`<button class="pcb" data-action="dkc" data-arg="${k}">${cardH(c,ok.has(k)?"":"no")}</button>`).join("");
+    $("#dkMe").textContent=`${D.out[0]?"Вы вышли ✅":role(0)+" Ваши карты: "+D.h[0].length}`;
+    let m="",lab="";
+    if(!D.over){
+      if(D.phase==="def"){m=D.def===0?"🛡️ Отбейте карту (можно выбрать цель на столе) или возьмите":`🤔 ${DK.who(D.def).n} защищается…`;if(D.def===0)lab="🤲 Беру";}
+      else if(D.th===0){m=D.tab.length?(D.taking?"⚔️ Защитник берёт — подкиньте ещё или закончите":"⚔️ Подкиньте карту или скажите «Бито»"):"⚔️ Ваш ход: выберите карту для атаки";if(D.tab.length)lab=D.taking?"✅ Хватит":"✅ Бито";}
+      else m=`🤔 Ходит ${DK.who(D.th).n}…`;
+      gameMsg("#dkMsg",m);
+    }
+    const b=$("#dkBtn");b.style.display=lab?"flex":"none";b.textContent=lab;
+  }
+};
+
+/* ---------- КОЛЕСО УДАЧИ ---------- */
+/* 20 равных секторов: шанс сектора = число таких секторов / 20. Выплата = ставка × множитель (округляется вниз). */
+const FW={
+  K:{z:{t:"💥",m:0,c:"#1b1b22"},h:{t:"🪙",m:0.5,c:"#6b4e0c"},o:{t:"🔄",m:1,c:"#1f7a4d"},d:{t:"💰",m:2,c:"#b3202e"},t:{t:"🎁",m:3,c:"#d9a21a"},j:{t:"💎",m:8,c:"#f5c542"}},
+  W:"zhzozdzhztzhzjzozdhz".split("")
+};
+function drawFW(cv){
+  const c=cv.getContext("2d"),W=cv.width,C=W/2,n=FW.W.length,step=Math.PI*2/n,R=C-2,Ro=R-14,Ri=R*0.3;
+  c.clearRect(0,0,W,W);const g=c.createRadialGradient(C,C,Ri,C,C,R);g.addColorStop(0,"#8a6508");g.addColorStop(1,"#f5c542");
+  c.beginPath();c.arc(C,C,R,0,7);c.fillStyle=g;c.fill();
+  FW.W.forEach((key,i)=>{
+    const k=FW.K[key],a0=-Math.PI/2+i*step,a1=a0+step;
+    c.beginPath();c.arc(C,C,Ro,a0,a1);c.arc(C,C,Ri,a1,a0,true);c.closePath();c.fillStyle=k.c;c.fill();c.strokeStyle="#d9b24a";c.lineWidth=2;c.stroke();
+    c.save();c.translate(C,C);c.rotate(a0+step/2+Math.PI/2);c.textAlign="center";c.textBaseline="middle";
+    c.font="30px sans-serif";c.fillText(k.t,0,-(Ro-26));
+    if(k.m>0){c.font="bold 22px sans-serif";c.fillStyle=key==="j"||key==="t"?"#1b1300":"#fff";c.fillText("×"+k.m,0,-(Ro-68));}
+    c.restore();
+  });
+  const g2=c.createRadialGradient(C,C,0,C,C,Ri);g2.addColorStop(0,"#1c1c22");g2.addColorStop(1,"#0b0b0d");
+  c.beginPath();c.arc(C,C,Ri-2,0,7);c.fillStyle=g2;c.fill();c.strokeStyle="#b8860b";c.lineWidth=4;c.stroke();
+}
+const FortuneView={
+  V:{busy:false,rot:0,timer:0},
+  html(){
+    const n=FW.W.length,keys=Object.keys(FW.K).reverse(),rtp=FW.W.reduce((a,k)=>a+FW.K[k].m,0)/n*100;
+    return `<div class="wheelwrap"><div class="pointer"></div>
+        <div class="wheelrot" id="fwRot"><canvas id="fwCv" width="640" height="640"></canvas></div>
+        <div class="hub"><span id="fwHub">🎯</span></div></div>
+      <div class="resmsg" id="fwMsg">Сделайте ставку и крутите колесо!</div>
+      ${Bet.html()}
+      <button class="btn" id="fwBtn" data-action="fwspin">🎯 Крутить</button>
+      <h2>Призы и шансы</h2>
+      <div class="card" style="padding:4px 16px">${keys.map(k=>{const q=FW.W.filter(x=>x===k).length,K=FW.K[k];
+        return `<div class="pay"><span>${K.t} ${K.m?"×"+K.m:"Пусто"}</span><b>${q*100/n}%</b></div>`;}).join("")}
+        <div class="pay"><span>✨ Возврат игроку (RTP)</span><b>${rtp.toFixed(1)}%</b></div></div>
+      <div class="sub">Выплата = ставка × множитель, дробная часть отбрасывается. Результат определяется до вращения.</div>
+      <h2>Последние результаты</h2><div id="hist">${histHtml("fortune")}</div>`;
+  },
+  mount(){const V=this.V;V.busy=false;V.rot=0;V.timer=0;drawFW($("#fwCv"));},
+  unmount(){
+    const V=this.V;clearTimeout(V.timer);V.timer=0;V.busy=false;
+    const p=S.pending;if(p&&p.game==="fortune")Economy.settle(p.payout,p.info);
+  },
+  spin(){
+    const V=this.V;if(V.busy||S.pending)return;
+    const bet=Bet.validate();if(!bet)return;
+    const i=Rand.int(FW.W.length),k=FW.K[FW.W[i]],pay=Math.floor(bet*k.m),cls=pay>bet?"win":pay===bet?"push":"lose";
+    if(!Economy.begin("fortune",bet,{payout:pay,info:{b:k.t+" ×"+k.m,c:cls,d:k.m?"Множитель ×"+k.m:"Пустой сектор",m:k.m,n:i}})){Sound.error();return;}
+    V.busy=true;Bet.lock(true);$("#fwBtn").disabled=true;$("#fwHub").textContent="🎯";gameMsg("#fwMsg","Колесо вращается…");
+    const step=360/FW.W.length,point=(i+0.5)*step+(Rand.float()-0.5)*step*0.7;
+    const d=(((-point)%360)+360)%360,cur=((V.rot%360)+360)%360;V.rot+=((d-cur+360)%360)+360*6;
+    const dur=S.settings.animations?5000:400,el=$("#fwRot");el.style.transitionDuration=dur+"ms";el.style.transform=`rotate(${V.rot}deg)`;
+    let tick=0;const tk=setInterval(()=>{if(++tick>14||!V.busy)clearInterval(tk);else Sound.beep(700,0.02,"square",0.015);},280);
+    V.timer=setTimeout(()=>this.finish(),dur+250);
+  },
+  finish(){
+    const V=this.V;V.timer=0;const p=S.pending;
+    if(!p||p.game!=="fortune"){V.busy=false;return;}
+    const info=p.info,r=Economy.settle(p.payout,info);V.busy=false;
+    Bet.lock(false);const b=$("#fwBtn");if(b)b.disabled=false;if(!r)return;
+    const k=FW.K[FW.W[info.n]];$("#fwHub").textContent=k.t;
+    const net=r.payout-r.bet;
+    if(net>0){gameMsg("#fwMsg",`🎉 ${k.t} ×${k.m}: +${fmt(net)} RC`,"win");Sound.win();haptic();}
+    else if(net===0)gameMsg("#fwMsg",`${k.t} ×${k.m}: ставка возвращена`,"win");
+    else gameMsg("#fwMsg",k.m?`${k.t} ×${k.m}: возврат ${fmt(r.payout)} RC, итог −${fmt(-net)}`:`💥 Пустой сектор: −${fmt(r.bet)} RC`,"lose");
+    $("#hist").innerHTML=histHtml("fortune");
+  }
+};
+
+/* ==========================================================
+   PLINKO 🔵 — шарик падает через ряды штырьков в ячейки с множителями
+   Модель: в каждом ряду шарик отскакивает влево или вправо с шансом 50/50 (Rand.int(2)),
+   ячейка = число отскоков вправо, поэтому шансы ячеек — биномиальные C(n,k)/2^n.
+   Путь шарика определяется ДО анимации, сохраняется выплатой в S.pending и анимация
+   проигрывает именно этот путь — ячейка, в которую упал шарик, и есть результат.
+   Множители подбираются так, чтобы возврат игроку (RTP) был ≈97% для каждого риска и числа рядов.
+   Деньги: Economy.begin (ставка) и Economy.settle (выплата) — по одному разу за бросок.
+   ========================================================== */
+const PL={
+  ROWS:[8,10,12,14,16],NAMES:["Низкий","Средний","Высокий"],RTP:0.97,
+  EDGE:[{8:5.6,10:8.9,12:10,14:7.1,16:16},{8:13,10:22,12:33,14:58,16:110},{8:29,10:76,12:170,14:420,16:1000}],   // множитель крайней ячейки
+  _t:{},
+  prob(n){const p=[];let c=1;for(let i=0;i<=n;i++){p.push(c/Math.pow(2,n));c=c*(n-i)/(i+1);}return p;},
+  round(m){return m<10?Math.round(m*100)/100:m<100?Math.round(m*10)/10:Math.round(m);},
+  fmt(m){return String(m);},
+  short(m){return m>=1000?"1k":String(m);},
+  table(risk,n){
+    const key=risk+"_"+n;if(this._t[key])return this._t[key];
+    const p=this.prob(n),M=this.EDGE[risk][n],d=p.map((_,i)=>Math.abs(i-n/2)/(n/2));
+    const f=(b,i)=>M*Math.exp(-b*(1-d[i]*d[i]));
+    const rtp=b=>p.reduce((s,pi,i)=>s+pi*f(b,i),0);
+    let lo=0,hi=60;for(let k=0;k<80;k++){const mid=(lo+hi)/2;if(rtp(mid)>this.RTP)lo=mid;else hi=mid;}
+    const b=(lo+hi)/2,m=p.map((_,i)=>this.round(Math.min(1000,f(b,i))));
+    return this._t[key]={m,p,rtp:p.reduce((s,pi,i)=>s+pi*m[i],0)};
+  },
+  color(m){if(m<1)return"#5a2a3c";const t=Math.min(1,Math.log10(m)/3);return`hsl(${Math.round(48-48*t)},88%,${Math.round(52-6*t)}%)`;}
+};
+const PlinkoView={
+  V:{risk:1,rows:12,anim:null,raf:0,fx:[],glow:{},trail:[],hl:-1,keep:0,active:false,cv:null,c:null},
+  html(){
+    const V=this.V;
+    return `<div class="pl-wrap"><canvas id="plCv" width="640" height="640"></canvas></div>
+      <div class="resmsg" id="plMsg">Выберите риск и ряды, сделайте ставку и бросайте шарик!</div>
+      <div class="card">
+        <div class="row"><span>Уровень риска</span><span id="plInfo"></span></div>
+        <div class="pl-seg" id="plRisk">${PL.NAMES.map((n,i)=>`<button class="pbtn" data-action="plrisk" data-arg="${i}">${n}</button>`).join("")}</div>
+        <div class="row" style="margin:14px 0 6px"><span>Количество рядов</span></div>
+        <div class="pl-seg" id="plRows">${PL.ROWS.map(n=>`<button class="pbtn" data-action="plrows" data-arg="${n}">${n}</button>`).join("")}</div>
+      </div>
+      ${Bet.html()}
+      <button class="btn" id="plBtn" data-action="pldrop">🔵 Бросить шарик</button>
+      <h2>Правила</h2><div class="card"><p class="sub" style="margin:0">В каждом ряду шарик отскакивает от штырька влево или вправо с равным шансом, поэтому чаще всего он попадает в центр (там множители поменьше), а крайние ячейки с большими множителями выпадают редко. Чем выше риск и больше рядов — тем выше крайние множители и тем ниже в центре. Выплата = ставка × множитель ячейки, дробная часть отбрасывается. Путь шарика определяется в момент броска, возврат игроку (RTP) для каждой настройки показан выше. Учитывается только ячейка, в которую шарик действительно упал.</p></div>
+      <h2>Последние броски</h2><div id="hist">${histHtml("plinko")}</div>`;
+  },
+  mount(){
+    const V=this.V;V.active=true;V.anim=null;V.fx=[];V.glow={};V.trail=[];V.hl=-1;V.keep=0;
+    V.cv=$("#plCv");V.c=V.cv.getContext("2d");this.sync();this.draw(performance.now());
+  },
+  unmount(){
+    const V=this.V;V.active=false;cancelAnimationFrame(V.raf);V.anim=null;
+    const p=S.pending;if(p&&p.game==="plinko")Economy.settle(p.payout,p.info);   // ушли посреди броска — он честно завершается
+  },
+  busy(){return !!this.V.anim||(S.pending&&S.pending.game==="plinko");},
+  sync(){
+    const V=this.V,tb=PL.table(V.risk,V.rows),b=this.busy();
+    document.querySelectorAll("#plRisk .pbtn").forEach(e=>e.classList.toggle("on",+e.dataset.arg===V.risk));
+    document.querySelectorAll("#plRows .pbtn").forEach(e=>e.classList.toggle("on",+e.dataset.arg===V.rows));
+    ["#plRisk","#plRows"].forEach(q=>{const e=$(q);if(e)e.classList.toggle("locked",b);});
+    const i=$("#plInfo");if(i)i.textContent=`RTP ${(tb.rtp*100).toFixed(1)}% · макс. ×${PL.fmt(tb.m[0])}`;
+    const bt=$("#plBtn");if(bt)bt.disabled=b;
+  },
+  setRisk(i){if(this.busy()||!(i>=0&&i<3))return;this.V.risk=i;this.sync();this.draw(performance.now());},
+  setRows(n){if(this.busy()||!PL.ROWS.includes(n))return;this.V.rows=n;this.V.hl=-1;this.sync();this.draw(performance.now());},
+  layout(n){
+    const W=640,H=640,padX=22,top=54,binH=46,s=(W-2*padX)/(n+1),dy=Math.min(s*0.95,(H-top-binH-8)/(n+0.9)),cx=W/2;
+    const L={W,H,s,dy,cx,top,binH,pr:Math.max(2.6,s*0.085),br:Math.max(6,s*0.26)};
+    L.yPeg=r=>top+(r+1)*dy;L.yb=L.yPeg(n-1)+dy*0.9;
+    L.yc=r=>L.yPeg(r)-(L.pr+L.br)*0.95;                      // центр шарика в момент касания штырька
+    return L;
+  },
+  start(){
+    const V=this.V;if(this.busy())return;
+    const bet=Bet.validate();if(!bet)return;
+    const n=V.rows,tb=PL.table(V.risk,n),path=[];let R=0;
+    for(let i=0;i<n;i++){const b=Rand.int(2);path.push(b);R+=b;}   // 1 — вправо
+    const mult=tb.m[R],pay=Math.floor(bet*mult),cls=mult>=2?"g":mult>=1?"push":"r";
+    if(!Economy.begin("plinko",bet,{payout:pay,info:{b:"×"+PL.fmt(mult),c:cls,d:`Ячейка ×${PL.fmt(mult)} · ${PL.NAMES[V.risk].toLowerCase()}, ${n} р.`,m:mult,n:R}})){Sound.error();return;}
+    const L=this.layout(n),xs=[],ys=[];let sum=0;
+    for(let r=0;r<n;r++){xs.push(L.cx+sum*L.s/2);ys.push(L.yc(r));sum+=path[r]?1:-1;}
+    xs.push(L.cx+sum*L.s/2);ys.push(L.yb+L.binH*0.5);          // последняя точка — центр ячейки R
+    const wj=path.map(()=>(Rand.float()-0.5)*L.s*0.16);
+    V.anim={t0:performance.now(),n,L,xs,ys,wj,R,path,td:0.34,T:0.2,tl:0.34,next:0,yStart:L.top-L.br*2};
+    V.hl=-1;V.trail=[];V.glow={};gameMsg("#plMsg","Шарик падает…");Bet.lock(true);this.sync();this.loop(performance.now());
+    try{V.cv.scrollIntoView({block:"center",behavior:S.settings.animations?"smooth":"auto"});}catch(e){}   // поле должно быть на экране во время падения
+  },
+  at(A,e){
+    const n=A.n;let x0,y0,x1,y1,u,lam,w=0;
+    if(e<A.td){x0=A.L.cx;y0=A.yStart;x1=A.xs[0];y1=A.ys[0];u=e/A.td;lam=0;}
+    else if(e<A.td+(n-1)*A.T){const r=Math.floor((e-A.td)/A.T);u=(e-A.td-r*A.T)/A.T;x0=A.xs[r];y0=A.ys[r];x1=A.xs[r+1];y1=A.ys[r+1];lam=1.2;w=A.wj[r];}
+    else{u=Math.min(1,(e-A.td-(n-1)*A.T)/A.tl);x0=A.xs[n-1];y0=A.ys[n-1];x1=A.xs[n];y1=A.ys[n];lam=1;}
+    u=Math.max(0,Math.min(1,u));const D=y1-y0;
+    return{x:x0+(x1-x0)*u+w*Math.sin(Math.PI*u),y:y0-lam*D*u+D*(1+lam)*u*u};
+  },
+  spark(x,y,n,col){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=40+Math.random()*120;this.V.fx.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-40,t:0,life:0.5+Math.random()*0.4,col});}},
+  loop(now){
+    const V=this.V;if(!V.active)return;cancelAnimationFrame(V.raf);
+    const A=V.anim;
+    if(A){
+      const k=S.settings.animations?1:14,e=(now-A.t0)/1000*k;
+      while(A.next<A.n&&e>=A.td+A.next*A.T){      // касание штырька: подсветка, звук, искры
+        const r=A.next,j=Math.round((A.xs[r]-A.L.cx)/A.L.s+(r+2)/2);V.glow[r*100+j]=now;
+        Sound.beep(320+r*28,0.04,"triangle",0.035);this.spark(A.xs[r],A.L.yPeg(r),3,"255,224,138");A.next++;
+      }
+      const p=this.at(A,e);V.trail.push(p);if(V.trail.length>12)V.trail.shift();
+      V.pos=p;
+      if(e>=A.td+(A.n-1)*A.T+A.tl){this.draw(now);this.finish(now);return;}
+    }
+    this.draw(now);
+    if(V.anim||V.fx.length||now<V.keep)V.raf=requestAnimationFrame(t=>this.loop(t));
+  },
+  finish(now){
+    const V=this.V,A=V.anim;V.anim=null;V.pos=null;V.trail=[];
+    const p=S.pending;if(!p||p.game!=="plinko"){this.sync();return;}
+    const info=p.info,r=Economy.settle(p.payout,info);if(!r){this.sync();return;}
+    V.hl=info.n;V.keep=now+1800;
+    const L=A.L;this.spark(A.xs[A.n],L.yb+10,info.m>=2?34:16,info.m>=2?"255,214,102":"190,200,255");
+    Bet.lock(false);this.sync();
+    const net=r.payout-r.bet,m=PL.fmt(info.m);
+    if(net>0){gameMsg("#plMsg",`🎉 ×${m}: +${fmt(net)} RC`,"win");Sound.win();haptic();}
+    else if(net===0)gameMsg("#plMsg",`×${m}: ставка возвращена`,"win");
+    else gameMsg("#plMsg",`×${m}: возврат ${fmt(r.payout)} RC, итог −${fmt(-net)}`,"lose");
+    const h=$("#hist");if(h)h.innerHTML=histHtml("plinko");
+    this.loop(now);
+  },
+  draw(now){
+    const V=this.V,c=V.c;if(!c)return;
+    const n=V.rows,L=this.layout(n),tb=PL.table(V.risk,n),W=L.W,H=L.H;
+    c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,W,H);
+    let g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,"#171726");g.addColorStop(1,"#0b0b12");c.fillStyle=g;c.fillRect(0,0,W,H);
+    // штырьки
+    for(let r=0;r<n;r++)for(let j=0;j<=r+2;j++){
+      const x=L.cx+(j-(r+2)/2)*L.s,y=L.yPeg(r),t=V.glow[r*100+j],gl=t?Math.max(0,1-(now-t)/450):0;
+      if(gl>0){c.fillStyle=`rgba(255,214,102,${0.35*gl})`;c.beginPath();c.arc(x,y,L.pr*(2+2*gl),0,7);c.fill();}
+      c.fillStyle=gl>0?`rgb(255,${Math.round(214+30*(1-gl))},${Math.round(102+120*(1-gl))})`:"#c9cde0";c.beginPath();c.arc(x,y,L.pr*(1+0.5*gl),0,7);c.fill();
+    }
+    // ячейки
+    c.textAlign="center";c.textBaseline="middle";
+    for(let i=0;i<=n;i++){
+      const x=L.cx+(i-n/2)*L.s,m=tb.m[i],hl=V.hl===i,pulse=hl?0.5+0.5*Math.sin(now/110):0,gap=1.6;
+      const w=L.s-2*gap,h=L.binH*(hl?1+0.1*pulse:1),y=L.yb+(hl?-L.binH*0.1*pulse:0);
+      c.save();if(hl){c.shadowColor="rgba(255,224,138,.95)";c.shadowBlur=22;}
+      c.fillStyle=PL.color(m);c.beginPath();c.roundRect?c.roundRect(x-w/2,y,w,h,6):c.rect(x-w/2,y,w,h);c.fill();c.restore();
+      if(hl){c.strokeStyle="#fff";c.lineWidth=2.5;c.beginPath();c.roundRect?c.roundRect(x-w/2,y,w,h,6):c.rect(x-w/2,y,w,h);c.stroke();}
+      c.fillStyle=m<1?"#f3d9e0":"#1b1300";c.font=`800 ${Math.max(11,Math.round(L.s*(m>=100?0.34:0.4)))}px sans-serif`;c.fillText(PL.short(m),x,y+h/2+1);
+    }
+    // шарик и след
+    const p=V.pos;
+    if(V.anim&&p){
+      V.trail.forEach((q,i)=>{c.fillStyle=`rgba(120,170,255,${0.05+0.2*i/V.trail.length})`;c.beginPath();c.arc(q.x,q.y,L.br*(0.45+0.5*i/V.trail.length),0,7);c.fill();});
+      c.save();c.shadowColor="rgba(90,150,255,.9)";c.shadowBlur=14;
+      const bg=c.createRadialGradient(p.x-L.br*0.35,p.y-L.br*0.4,L.br*0.1,p.x,p.y,L.br);bg.addColorStop(0,"#d6e6ff");bg.addColorStop(0.35,"#5b9bff");bg.addColorStop(1,"#1d3f9e");
+      c.fillStyle=bg;c.beginPath();c.arc(p.x,p.y,L.br,0,7);c.fill();c.restore();
+    }
+    // искры
+    const dt=V.lastT?Math.min(0.05,(now-V.lastT)/1000):0.016;V.lastT=now;
+    V.fx=V.fx.filter(f=>(f.t+=dt)<f.life);
+    for(const f of V.fx){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=320*dt;c.fillStyle=`rgba(${f.col},${1-f.t/f.life})`;c.beginPath();c.arc(f.x,f.y,2.6,0,7);c.fill();}
+    // всплывающий множитель над итоговой ячейкой
+    if(V.hl>=0&&now<V.keep){const x=L.cx+(V.hl-n/2)*L.s,k=1-(V.keep-now)/1800;c.fillStyle=`rgba(255,236,170,${Math.max(0,1-k*1.1)})`;c.font="900 30px sans-serif";c.fillText("×"+PL.fmt(tb.m[V.hl]),Math.max(50,Math.min(W-50,x)),L.yb-14-k*26);}
+  }
+};
+
+/* ==========================================================
+   MINES 💥 — поле 5×5, от 1 до 24 мин
+   Мины расставляются в начале раунда (Fisher–Yates на Rand.int) и хранятся в S.pending вместе с
+   открытыми клетками, так что раунд нельзя «переиграть» перезагрузкой. Ставка списывается один раз
+   (Economy.begin), выплата — один раз (Economy.settle) при «Забрать», на мине или после открытия
+   всех безопасных клеток. Множитель после k безопасных клеток при m минах:
+     ×(k) = RTP · Π_{i=0..k-1} (25−i)/(25−m−i),  RTP = 97%  (1/вероятность дойти до k клеток).
+   Уход с экрана или перезагрузка посреди раунда завершает его: забирается текущий выигрыш,
+   а если ни одной клетки не открыто — возвращается ставка.
+   ========================================================== */
+const MN={
+  N:25,RTP:0.97,
+  mult(m,k){if(k<=0)return 1;let x=1;for(let i=0;i<k;i++)x*=(MN.N-i)/(MN.N-m-i);return Math.floor(x*MN.RTP*100)/100;},
+  fm(x){return x>=1000?fmt(Math.floor(x)):x.toFixed(2);},
+  active(){const p=S.pending;return p&&p.game==="mines"?p:null;},
+  start(bet,count){
+    if(S.pending||!isInt(count,1)||count>24)return false;
+    const cells=Array.from({length:25},(_,i)=>i);
+    for(let i=24;i>0;i--){const j=Rand.int(i+1);[cells[i],cells[j]]=[cells[j],cells[i]];}
+    return Economy.begin("mines",bet,{count,mines:cells.slice(0,count).sort((a,b)=>a-b),opened:[]});
+  },
+  open(i){
+    const p=this.active();if(!p||!Number.isInteger(i)||i<0||i>24||p.opened.includes(i))return null;
+    if(p.mines.includes(i)){
+      const k=p.opened.length,mines=p.mines.slice(),opened=p.opened.slice();
+      const res=Economy.settle(0,{b:"💥",c:"r",d:`Мина после ${k} 💎`});
+      return res?{r:"mine",res,mines,opened}:null;
+    }
+    p.opened.push(i);save();
+    if(p.opened.length>=25-p.count){const o=this.cash();return o?Object.assign({r:"clear"},o):null;}   // найдены все кристаллы
+    return{r:"gem",k:p.opened.length,mult:this.mult(p.count,p.opened.length)};
+  },
+  cash(){
+    const p=this.active();if(!p||p.opened.length<1)return null;
+    const k=p.opened.length,m=this.mult(p.count,k),mines=p.mines.slice(),opened=p.opened.slice();
+    const res=Economy.settle(Math.floor(p.bet*m),{b:"×"+m.toFixed(2),c:"g",d:`Забрал ×${m.toFixed(2)} (${k} 💎)`,m:Math.min(m,1000)});
+    return res?{res,mult:m,mines,opened}:null;
+  },
+  leave(){
+    const p=this.active();if(!p)return null;
+    if(p.opened.length>=1)return this.cash();
+    const mines=p.mines.slice(),res=Economy.settle(p.bet,{b:"↩",c:"push",d:"Возврат ставки"});
+    return res?{res,mult:1,mines,opened:[]}:null;
+  }
+};
+const MinesView={
+  V:{count:3,over:null,hit:-1,cool:0,active:false},
+  html(){
+    return `<div class="mn-stats" id="mnStats"></div>
+      <div class="mn-grid" id="mnGrid"></div>
+      <div class="resmsg" id="mnMsg">Выберите число мин и сделайте ставку.</div>
+      <div class="card" id="mnSetup">
+        <div class="row"><span>Количество мин</span><span id="mnPrev"></span></div>
+        <div class="mn-cnt"><button class="pbtn" data-action="mncount" data-arg="-1">−</button><b id="mnCnt">3</b><button class="pbtn" data-action="mncount" data-arg="+1">+</button></div>
+        <div class="presets">${[1,3,5,10,24].map(v=>`<button class="pbtn" data-action="mncount" data-arg="${v}">${v}</button>`).join("")}</div>
+      </div>
+      ${Bet.html()}
+      <button class="btn" id="mnStart" data-action="mnstart">💥 Начать игру</button>
+      <button class="btn" id="mnCash" data-action="mncash" style="display:none">💰 Забрать</button>
+      <h2>Правила</h2><div class="card"><p class="sub" style="margin:0">Поле 5×5 скрывает кристаллы 💎 и мины 💣. Откройте клетку: кристалл повышает множитель, мина завершает раунд проигрышем ставки. Нажмите «Забрать» в любой момент после первого кристалла — и вы получите ставку × текущий множитель (дробная часть отбрасывается). Множитель считается по формуле честной вероятности с возвратом игроку 97%: чем больше мин, тем быстрее он растёт. Расположение мин определяется при старте и не меняется. Если уйти с экрана или закрыть приложение посреди раунда, раунд завершится автоматически: вы заберёте текущий выигрыш (без открытых клеток — вернётся ставка).</p></div>
+      <h2>Последние раунды</h2><div id="hist">${histHtml("mines")}</div>`;
+  },
+  mount(){const V=this.V;V.active=true;V.over=null;V.hit=-1;this.paint();},
+  unmount(){const V=this.V;V.active=false;MN.leave();},
+  setCount(a){
+    const V=this.V;if(MN.active())return;
+    V.count=Math.max(1,Math.min(24,a==="-1"?V.count-1:a==="+1"?V.count+1:(parseInt(a,10)||V.count)));this.paint();
+  },
+  cellCls(i,p){
+    const V=this.V;
+    if(p)return p.opened.includes(i)?"gem":"hid";
+    if(V.over){
+      if(V.over.opened.includes(i))return"gem";
+      if(i===V.hit)return"mine boom";
+      return V.over.mines.includes(i)?"mine rev":"gem rev";
+    }
+    return"hid";
+  },
+  paint(){
+    const V=this.V,p=MN.active(),g=$("#mnGrid");if(!g)return;
+    const cnt=p?p.count:V.count,k=p?p.opened.length:0;
+    g.innerHTML=Array.from({length:25},(_,i)=>{
+      const cl=this.cellCls(i,p),open=cl.indexOf("hid")<0,ic=cl.indexOf("mine")>=0?"💣":open?"💎":"";
+      return `<button class="mn-c ${cl}" data-action="mnc" data-arg="${i}" style="--d:${(i*0.03).toFixed(2)}s" ${p&&!open?"":"disabled"} aria-label="Клетка ${i+1}">${ic}</button>`;
+    }).join("");
+    const m=MN.mult(cnt,k),next=MN.mult(cnt,k+1),bet=p?p.bet:Bet.get();
+    const left=25-cnt-k;
+    $("#mnStats").innerHTML=p?`<div><small>Множитель</small><b>×${MN.fm(m)}</b></div><div><small>Выигрыш сейчас</small><b>${fmt(Math.floor(p.bet*m))}</b></div><div><small>Дальше</small><b>${left>0?"×"+MN.fm(next):"—"}</b></div>`
+      :`<div><small>Мины</small><b>💣 ${cnt}</b></div><div><small>Кристаллы</small><b>💎 ${25-cnt}</b></div><div><small>Первая клетка</small><b>×${MN.fm(MN.mult(cnt,1))}</b></div>`;
+    $("#mnCnt").textContent=cnt;$("#mnPrev").textContent=`💎 ${25-cnt} из 25`;
+    document.querySelectorAll("#mnSetup .pbtn").forEach(e=>{e.disabled=!!p;});
+    const st=$("#mnStart"),cb=$("#mnCash");
+    st.style.display=p?"none":"";cb.style.display=p?"":"none";
+    st.textContent=V.over?"🔄 Новая игра":"💥 Начать игру";
+    if(p){cb.disabled=k<1;cb.textContent=k<1?"Откройте клетку":`💰 Забрать ${fmt(Math.floor(p.bet*m))} RC`;}
+    Bet.lock(!!p);
+    const sb=$("#mnSetup"),bb=$("#betBox");if(sb)sb.style.display=p?"none":"";if(bb)bb.style.display=p?"none":"";   // во время раунда кнопка «Забрать» остаётся рядом с полем
+  },
+  burst(el,txt,n){
+    if(!S.settings.animations||!el)return;
+    for(let i=0;i<n;i++){
+      const s=document.createElement("span");s.className="mn-fx";s.textContent=txt;
+      const a=Math.random()*Math.PI*2,d=26+Math.random()*30;
+      s.style.setProperty("--dx",Math.cos(a)*d+"px");s.style.setProperty("--dy",Math.sin(a)*d+"px");
+      el.appendChild(s);setTimeout(()=>s.remove(),750);
+    }
+  },
+  start(){
+    const V=this.V;if(MN.active()||Date.now()<V.cool)return;
+    const bet=Bet.validate();if(!bet)return;
+    if(!MN.start(bet,V.count)){Sound.error();return;}
+    V.over=null;V.hit=-1;this.paint();
+    gameMsg("#mnMsg","Открывайте клетки — каждый кристалл повышает множитель");Sound.click();
+  },
+  tap(i){
+    const V=this.V;if(!MN.active())return;
+    const r=MN.open(i);if(!r)return;
+    const el=document.querySelector(`#mnGrid .mn-c[data-arg="${i}"]`);
+    if(r.r==="gem"){
+      if(el){el.className="mn-c gem pop";el.textContent="💎";el.disabled=true;this.burst(el,"✨",6);}
+      Sound.beep(520+r.k*35,0.1,"triangle",0.06);haptic();
+      this.paint2(r.k);
+    }else if(r.r==="mine"){
+      V.over={mines:r.mines,opened:r.opened};V.hit=i;this.end(false,r.res,0);
+    }else{
+      V.over={mines:r.mines,opened:r.opened.concat([])};V.hit=-1;this.end(true,r.res,r.mult,true);
+    }
+  },
+  paint2(k){   // обновить панель и кнопку после безопасной клетки, не пересоздавая поле (иначе пропадёт анимация)
+    const p=MN.active();if(!p)return;
+    const m=MN.mult(p.count,k),next=MN.mult(p.count,k+1),left=25-p.count-k;
+    $("#mnStats").innerHTML=`<div><small>Множитель</small><b>×${MN.fm(m)}</b></div><div><small>Выигрыш сейчас</small><b>${fmt(Math.floor(p.bet*m))}</b></div><div><small>Дальше</small><b>${left>0?"×"+MN.fm(next):"—"}</b></div>`;
+    const cb=$("#mnCash");cb.disabled=false;cb.textContent=`💰 Забрать ${fmt(Math.floor(p.bet*m))} RC`;
+    gameMsg("#mnMsg",`💎 ${k} · ×${MN.fm(m)} — забирайте или рискуйте дальше`);
+  },
+  cash(){
+    const V=this.V;if(!MN.active())return;
+    const o=MN.cash();if(!o)return;
+    V.over={mines:o.mines,opened:o.opened};V.hit=-1;this.end(true,o.res,o.mult);
+  },
+  end(won,res,mult,all){
+    const V=this.V;V.cool=Date.now()+900;      // защита от случайного двойного тапа: новая игра не стартует сразу
+    this.paint();
+    const grid=$("#mnGrid");
+    if(won){
+      gameMsg("#mnMsg",`${all?"🏆 Все кристаллы найдены! ":"🎉 "}×${MN.fm(mult)}: +${fmt(res.payout-res.bet)} RC`,"win");
+      Sound.win();haptic();this.burst(grid&&grid.querySelector(".gem"),"💎",10);
+    }else{
+      gameMsg("#mnMsg",`💥 Мина! −${fmt(res.bet)} RC`,"lose");Sound.error();haptic("error");
+      if(grid&&S.settings.animations){grid.classList.remove("shake");void grid.offsetWidth;grid.classList.add("shake");}
+      const b=grid&&grid.querySelector(".boom");this.burst(b,"💥",8);
+    }
+    const h=$("#hist");if(h)h.innerHTML=histHtml("mines");
+  }
+};
+
+const GameViews = { slots:SlotsView, crash:CrashView, roulette:RouletteView, poker:PokerView, durak:DurakView, fortune:FortuneView, plinko:PlinkoView, mines:MinesView };
+
+/* Раунд Crash идёт по времени, даже если вы ушли с экрана игры */
+setInterval(()=>{ if(S.pending && S.pending.game==="crash") Crash.finishIfDone(); }, 250);
+
+/* При запуске: если приложение закрыли посреди раунда — честно его завершаем */
+function resolvePendingOnLoad(){
+  const p = S.pending; if(!p) return;
+  let r = null;
+  if(p.game==="crash") r = Crash.finishIfDone();
+  else if(p.game==="mines") r = MN.leave();
+  else r = Economy.settle(p.payout, p.info);
+  if(r) toast(r.payout > 0 ? `Незавершённый раунд: +${fmt(r.payout)} RC` : "Незавершённый раунд завершён");
+}
+
+/* ==========================================================
+   СЛУЖЕБНАЯ ПАНЕЛЬ (скрытая)
+   Открывается 7 нажатиями подряд по балансу в верхней панели (пауза между нажатиями — до 3 с).
+   Баланс меняется только через Economy / S.balance (отдельной валюты нет), шансы — только через ODDS.
+   Это оверлей поверх игры: закрытие ничего не перерисовывает и не прерывает раунд.
+   ВНИМАНИЕ: всё хранится на устройстве (localStorage), защиты от посторонних нет —
+   для настоящей админки нужен сервер.
+   ========================================================== */
+const fmtP = v => String(Math.round(v*10000)/10000);          // 2.7027
+/* число из поля или NaN. Если поле не трогали — берём точное значение, а не округлённое */
+function admNum(el, dec){
+  if(!el) return NaN;
+  const s = String(el.value||"").trim().replace(",",".");
+  if(el.dataset.raw !== undefined && s === el.dataset.shown) return Number(el.dataset.raw);
+  return new RegExp("^\\d+(\\.\\d{1,"+dec+"})?$").test(s) ? Number(s) : NaN;
+}
+function admIn(v, cls, id){
+  const s = fmtP(v);
+  return `<input class="adm-in ${cls||""}" ${id?`id="${id}"`:""} type="text" inputmode="decimal" autocomplete="off" maxlength="12" value="${s}" data-shown="${s}" data-raw="${v}">`;
+}
+const Admin = {
+  tap:{n:0, t:0}, tab:"bal", cb:null, nt:0,
+  NAMES:{"🍒":"Вишня","🍋":"Лимон","🔔":"Колокол","⭐":"Звезда","💎":"Бриллиант","7️⃣":"Семёрка"},
+  TABS:[["bal","Баланс"],["slots","Слоты"],["roulette","Рулетка"],["crash","Crash"]],
+
+  init(){
+    const adm = $("#adm"); if(!adm) return;
+    document.addEventListener("click", e=>{ if(e.target.closest && e.target.closest(".bal")) this.onBalTap(); });
+    adm.addEventListener("click", e=>{
+      if(e.target === adm){ this.close(); return; }
+      const b = e.target.closest("[data-adm]"); if(!b) return;
+      Sound.click(); this.act(b.dataset.adm, b.dataset.arg);
+    });
+    adm.addEventListener("input", ()=>this.live());
+    document.addEventListener("keydown", e=>{ if(e.key==="Escape" && adm.classList.contains("show")) this.close(); });
+  },
+  onBalTap(){
+    const now = Date.now();
+    this.tap.n = (now - this.tap.t > 3000) ? 1 : this.tap.n + 1;     // долгая пауза — счёт заново
+    this.tap.t = now;
+    if(this.tap.n >= 7){ this.tap.n = 0; this.show(); }
+  },
+  show(){ this.tab = "bal"; this.render(); $("#adm").classList.add("show"); },
+  close(){ this.hideCf(); $("#adm").classList.remove("show"); },
+  render(){
+    $("#admSheet").innerHTML =
+      `<div class="adm-h"><b>⚙️ Служебная панель</b><button class="adm-x" data-adm="close" aria-label="Закрыть">✕</button></div>
+       <div class="adm-tabs">${this.TABS.map(t=>`<button class="adm-tab ${t[0]===this.tab?"on":""}" data-adm="tab" data-arg="${t[0]}">${t[1]}</button>`).join("")}</div>
+       <div class="adm-note" id="admNote"></div>
+       <div class="adm-body" id="admBody">${this.views[this.tab]()}</div>`;
+    this.live();
+  },
+  note(msg, ok){
+    const n = $("#admNote"); if(!n) return;
+    n.textContent = msg; n.className = "adm-note show " + (ok ? "ok" : "err");
+    clearTimeout(this.nt); this.nt = setTimeout(()=>n.classList.remove("show"), 4500);
+  },
+  ask(text, yes, okLabel){
+    this.cb = yes; const c = $("#admCf");
+    c.innerHTML = `<div class="box"><h3>Подтвердите</h3><p class="sub" style="margin:0">${esc(text)}</p>
+      <div class="acts"><button class="btn sec" data-adm="cfNo">Отмена</button><button class="btn" data-adm="cfYes">${esc(okLabel||"Подтвердить")}</button></div></div>`;
+    c.classList.add("show");
+  },
+  hideCf(){ const c = $("#admCf"); if(c){ c.classList.remove("show"); c.innerHTML = ""; } this.cb = null; },
+  btns(){ return `<div class="adm-btns"><button class="btn" data-adm="apply">Применить</button><button class="btn sec" data-adm="reset">Сбросить стандартные настройки</button></div>`; },
+
+  act(a, arg){
+    switch(a){
+      case "close": return this.close();
+      case "tab": if(this.TABS.some(t=>t[0]===arg)){ this.tab = arg; this.render(); } return;
+      case "give": case "take": case "set": return this.balOp(a);
+      case "cfNo": return this.hideCf();
+      case "cfYes": { const f = this.cb; this.hideCf(); if(f) f(); return; }
+      case "apply": return this.apply();
+      case "reset": return this.ask("Вернуть стандартные шансы для этого режима?", ()=>this.reset(), "Сбросить");
+      case "fill": return this.fillRoulette();
+    }
+  },
+
+  /* ---------- баланс ---------- */
+  balOp(kind){
+    const max = CONFIG.maxBalance, el = $("#admAmt");
+    const raw = String(el ? el.value : "").replace(/[\s\u00a0]/g,"");
+    if(!raw) return this.note("Введите количество RC", false);
+    if(!/^\d+$/.test(raw)) return this.note("Допустимы только целые числа: без минуса, дробей и букв", false);
+    if(raw.replace(/^0+/,"").length > 13) return this.note("Слишком большое число. Максимум: "+fmt(max), false);
+    const n = Number(raw);
+    if(!Number.isSafeInteger(n) || n > max) return this.note("Слишком большое число. Максимум: "+fmt(max), false);
+    if(n < 1 && kind !== "set") return this.note("Сумма должна быть больше нуля", false);
+    const cur = S.balance; let text, label;
+    if(kind === "give"){
+      if(cur >= max) return this.note("Баланс уже на максимуме", false);
+      const after = Math.min(max, cur + n);
+      text = `Выдать ${fmt(after-cur)} RC? Баланс: ${fmt(cur)} → ${fmt(after)}`; label = "Выдать";
+    }else if(kind === "take"){
+      if(n > cur) return this.note("Нельзя снять больше, чем есть на балансе ("+fmt(cur)+" RC)", false);
+      text = `Снять ${fmt(n)} RC? Баланс: ${fmt(cur)} → ${fmt(cur-n)}`; label = "Снять";
+    }else{
+      text = `Установить баланс ${fmt(n)} RC? Сейчас: ${fmt(cur)} RC.` + (n===0 ? " При нулевом балансе сработает защита от банкротства." : "");
+      label = "Установить";
+    }
+    this.ask(text, ()=>this.doBal(kind, n), label);
+  },
+  doBal(kind, n){
+    const cur = S.balance, max = CONFIG.maxBalance; let msg;
+    if(kind === "give"){
+      const add = Math.min(n, max - cur);
+      if(add < 1) return this.note("Баланс уже на максимуме", false);
+      Economy.earn(add); msg = `Выдано ${fmt(add)} RC` + (add < n ? " (достигнут лимит баланса)" : "");
+    }else if(kind === "take"){
+      if(!Economy.spend(n)) return this.note("Не хватает RC на балансе ("+fmt(S.balance)+")", false);
+      S.stats.wagered -= n; save();                        // это не ставка — статистику не искажаем
+      msg = `Снято ${fmt(n)} RC`;
+    }else{
+      S.balance = n; ui.pulse = true; save(); Bankruptcy.soon(); msg = `Баланс установлен: ${fmt(n)} RC`;
+    }
+    if(ui.view !== "game") render();                       // экран игры не перерисовываем — раунд не сбрасывается
+    refreshTop();
+    const a = $("#admAmt"); if(a) a.value = "";
+    this.note("✅ " + msg + ". Баланс: " + fmt(S.balance) + " RC", true);
+  },
+
+  /* ---------- шансы ---------- */
+  slotStats(w){      // w — вероятности в % (сумма 100); возвращает {hit, rtp} в %
+    let hit = 0, rtp = 0, c = 0;
+    SLOT.syms.forEach((x,i)=>{ const p = w[i]/100, t = p*p*p; hit += t; rtp += t*x.p; if(x.s==="🍒") c = p; });
+    const two = 3*c*c*(1-c); hit += two; rtp += two;      // ровно две вишни → возврат ставки (×1)
+    return {hit:hit*100, rtp:rtp*100};
+  },
+  views:{
+    bal(){
+      return `<div class="card hero" style="margin-bottom:12px"><div class="row"><span>Текущий баланс</span><span>макс. ${fmt(CONFIG.maxBalance)}</span></div>
+        <div class="big" style="margin:4px 0 0"><i class="chip lg"></i><span id="admBal" class="js-bal">${fmt(S.balance)}</span><small style="font-size:18px;color:var(--mute)">RC</small></div></div>
+        <div class="card"><div class="row"><span>Количество RC (целое число)</span></div>
+          <input class="adm-in" id="admAmt" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="0">
+          <div class="adm-btns">
+            <button class="btn" data-adm="give">➕ Выдать монеты</button>
+            <button class="btn danger" data-adm="take">➖ Снять монеты</button>
+            <button class="btn sec" data-adm="set">🎯 Установить баланс</button>
+          </div></div>`;
+    },
+    slots(){
+      const w = ODDS.slots.w, std = ODDS_DEFAULT.slots.w;
+      return `<div class="sub" style="margin-bottom:10px">Вероятность символа на каждом барабане, %. Выплаты (×) не меняются. Если сумма не равна 100%, значения пропорционально приводятся к 100%.</div>
+        <div class="card">${SLOT.syms.map(x=>`<div class="adm-row"><div class="tx"><b>${x.s} ${Admin.NAMES[x.s]}</b><small>Тройка ×${x.p} · стандарт ${fmtP(std[x.s])}%</small></div>${admIn(w[x.s],"adm-p")}</div>`).join("")}</div>
+        <div class="card adm-stats" id="admStats"></div>${Admin.btns()}`;
+    },
+    roulette(){
+      const w = ODDS.roulette.w, g = [w[0], 0, 0];
+      w.forEach((v,i)=>{ if(i) g[ROU.color(i)==="red" ? 1 : 2] += v; });
+      return `<div class="sub" style="margin-bottom:10px">Вероятность каждого числа 0–36, %. Выплаты (35:1, 2:1, 1:1) не меняются. Если сумма не равна 100%, значения пропорционально приводятся к 100%.</div>
+        <div class="card"><b>Быстрая настройка по группам</b>
+          <div class="adm-3"><label>Зеро, %${admIn(g[0],"","admG0")}</label><label>Красные, %${admIn(g[1],"","admG1")}</label><label>Чёрные, %${admIn(g[2],"","admG2")}</label></div>
+          <button class="btn sec sm" style="margin-top:10px" data-adm="fill">Заполнить сетку</button>
+          <div class="sub" style="font-size:13px;margin-top:6px">Распределяет вероятность поровну внутри группы. Сохраняется кнопкой «Применить».</div></div>
+        <div class="card"><div class="adm-grid">${w.map((v,n)=>`<label class="adm-cell"><b class="c-${ROU.color(n)}">${n}</b>${admIn(v,"adm-p")}</label>`).join("")}</div>
+          <div class="sub" style="font-size:13px;margin-top:8px">Стандарт: ${fmtP(100/37)}% на каждое число.</div></div>
+        <div class="card adm-stats" id="admStats"></div>${Admin.btns()}`;
+    },
+    crash(){
+      const c = ODDS.crash, s = ODDS_DEFAULT.crash;
+      return `<div class="sub" style="margin-bottom:10px">Точка обвала выбирается при старте раунда — изменения действуют на новые раунды. Правила, авто-вывод и выплаты не меняются.</div>
+        <div class="card">
+          <div class="adm-row"><div class="tx"><b>Возврат игроку (RTP), %</b><small>Сейчас ${fmtP(c.rtp)}% · стандарт ${s.rtp}% · допустимо 1–100. Чем выше, тем реже ранние обвалы.</small></div>${admIn(c.rtp,"","admRtp")}</div>
+          <div class="adm-row"><div class="tx"><b>Максимальный множитель обвала</b><small>Сейчас ×${fmtP(c.cap)} · стандарт ×${s.cap} · допустимо 1.01–1000</small></div>${admIn(c.cap,"","admCap")}</div>
+        </div><div class="card adm-stats" id="admStats"></div>${Admin.btns()}`;
+    }
+  },
+
+  /* живой предпросмотр (ничего не сохраняет) */
+  live(){
+    const st = $("#admStats"); if(!st) return;
+    const bad = `<span class="neg">Проверьте значения</span>`;
+    if(this.tab === "slots" || this.tab === "roulette"){
+      const vals = [...document.querySelectorAll("#admBody .adm-p")].map(e=>admNum(e,6));
+      const t = vals.reduce((a,b)=>a+b,0);
+      if(!vals.every(v=>v>=0 && v<=100) || !(t>0)){ st.innerHTML = bad + " — допустимо 0–100, сумма больше 0"; return; }
+      const n = vals.map(v=>v*100/t);
+      let html = `Сумма: <b>${fmtP(t)}%</b>` + (Math.abs(t-100) > 1e-4 ? " — при сохранении будет приведена к 100%" : " ✓");
+      if(this.tab === "slots"){
+        const r = this.slotStats(n), d = this.slotStats(SLOT.syms.map(x=>ODDS_DEFAULT.slots.w[x.s]));
+        html += `<br>Шанс выигрыша (любая комбинация): <b>${r.hit.toFixed(2)}%</b> (стандарт ${d.hit.toFixed(2)}%)<br>Теоретический возврат (RTP): <b>${r.rtp.toFixed(2)}%</b> (стандарт ${d.rtp.toFixed(2)}%)`;
+      }else{
+        let z = n[0], rd = 0, bl = 0; n.forEach((v,i)=>{ if(i) (ROU.color(i)==="red" ? rd += v : bl += v); });
+        html += `<br>Зеро: <b>${z.toFixed(2)}%</b> · Красные: <b>${rd.toFixed(2)}%</b> · Чёрные: <b>${bl.toFixed(2)}%</b>`;
+      }
+      st.innerHTML = html;
+    }else if(this.tab === "crash"){
+      const rtp = admNum($("#admRtp"),2), cap = admNum($("#admCap"),2);
+      if(!(rtp>=1 && rtp<=100 && cap>=1.01 && cap<=1000)){ st.innerHTML = bad + " — RTP 1–100, максимум 1.01–1000"; return; }
+      const pr = x => cap >= x ? rtp/x : 0;                 // P(точка обвала ≥ x), %
+      st.innerHTML = `Мгновенный обвал (×1.00): <b>${(100*(1-rtp/101)).toFixed(2)}%</b><br>Дойдёт до ×2: <b>${pr(2).toFixed(2)}%</b> · ×5: <b>${pr(5).toFixed(2)}%</b><br>×10: <b>${pr(10).toFixed(2)}%</b> · ×100: <b>${pr(100).toFixed(2)}%</b>`;
+    }
+  },
+  fillRoulette(){
+    const g = [0,1,2].map(i=>admNum($("#admG"+i),6));
+    const n = Odds.normalize(g);
+    if(!n) return this.note("Группы: числа от 0 до 100, сумма больше нуля", false);
+    document.querySelectorAll("#admBody .adm-p").forEach((el,i)=>{
+      const c = ROU.color(i), v = c==="green" ? n[0] : c==="red" ? n[1]/18 : n[2]/18;
+      el.value = fmtP(v); delete el.dataset.raw; delete el.dataset.shown;
+    });
+    this.live(); this.note("Сетка заполнена. Нажмите «Применить», чтобы сохранить.", true);
+  },
+  persist(msg){
+    const saved = Odds.save();
+    this.render();
+    this.note(saved ? "✅ " + msg : "Применено, но браузер не дал сохранить настройки — после перезапуска они пропадут", saved);
+  },
+  apply(){
+    const tab = this.tab;
+    if(tab === "slots" || tab === "roulette"){
+      const vals = [...document.querySelectorAll("#admBody .adm-p")].map(e=>admNum(e,6));
+      const bad = vals.findIndex(v=>!(v>=0 && v<=100));
+      if(bad >= 0){
+        const nm = tab==="slots" ? SLOT.syms[bad].s+" "+this.NAMES[SLOT.syms[bad].s] : "число "+bad;
+        return this.note("Некорректное значение: "+nm+". Допустимо от 0 до 100, максимум 6 знаков после точки", false);
+      }
+      const total = vals.reduce((a,b)=>a+b,0), n = Odds.normalize(vals);
+      if(!n) return this.note("Сумма вероятностей должна быть больше нуля", false);
+      if(tab === "slots") SLOT.syms.forEach((x,i)=>{ ODDS.slots.w[x.s] = n[i]; });
+      else ODDS.roulette.w = n;
+      const norm = Math.abs(total-100) > 1e-4;
+      return this.persist(norm ? `Сохранено. Сумма была ${fmtP(total)}% — приведена к 100%` : "Шансы сохранены");
+    }
+    if(tab === "crash"){
+      const rtp = admNum($("#admRtp"),2), cap = admNum($("#admCap"),2);
+      if(!(rtp>=1 && rtp<=100)) return this.note("RTP: число от 1 до 100 (до 2 знаков после точки)", false);
+      if(!(cap>=1.01 && cap<=1000)) return this.note("Максимальный множитель: от 1.01 до 1000", false);
+      ODDS.crash.rtp = Math.round(rtp*100)/100; ODDS.crash.cap = Math.round(cap*100)/100;
+      return this.persist("Настройки Crash сохранены (для новых раундов)");
+    }
+  },
+  reset(){
+    const tab = this.tab; if(tab === "bal") return;
+    ODDS[tab] = Odds.clone(ODDS_DEFAULT)[tab];
+    this.persist("Стандартные шансы восстановлены");
+  }
+};
+
+/* один обработчик на все кнопки; защита от двойных нажатий */
+document.addEventListener("input", e=>{ if(e.target.id==="betInput") e.target.value = e.target.value.replace(/\D/g,"").slice(0,9); if(e.target.id==="crashAuto") e.target.value = e.target.value.replace(/[^0-9.,]/g,"").slice(0,7); });
+document.addEventListener("change", e=>{ if(e.target.id==="betInput"){ const v = Bet.get(); if(v){ S.lastBet = Math.min(v,999999999); save(); } } });
+let lastTap = 0;
+document.addEventListener("click", e=>{
+  const el = e.target.closest("[data-action]");
+  if(!el || el.disabled) return;
+  const now = Date.now(); if(now - lastTap < 90) return; lastTap = now;
+  const fn = Actions[el.dataset.action]; if(!fn) return;
+  Sound.click(); haptic();
+  try{ fn(el.dataset.arg); }catch(err){ console.error(err); toast("Ошибка, попробуйте ещё раз"); }
+});
+
+/* таймер ежедневной награды */
+setInterval(()=>{
+  const t = $("#dailyTimer"); if(!t || ui.view!=="home") return;
+  const left = Daily.info().remain;
+  if(left<=0){ render(); return; }
+  t.textContent = fmtTime(left);
+}, 1000);
+
+/* старт */
+try{
+  if(tg){ tg.ready(); tg.expand(); try{ tg.setHeaderColor("#0b0b0d"); tg.setBackgroundColor("#0b0b0d"); }catch(e){} try{ tg.disableVerticalSwipes && tg.disableVerticalSwipes(); }catch(e){} }
+}catch(e){}
+try{ Admin.init(); }catch(e){ console.error(e); }
+save();
+resolvePendingOnLoad();
+render();
+Bankruptcy.start();
+document.addEventListener("pointerdown", ()=>Sound.syncMusic(), {once:true});
+</script>
+</body>
+</html>
